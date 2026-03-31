@@ -17,6 +17,8 @@
       --surface3: #222222;
       --orange: #e8420a;
       --orange-dim: rgba(232,66,10,0.18);
+      --sxm-blue: #1a1a8c;
+      --sxm-blue-dim: rgba(26,26,140,0.18);
       --text: #f0ede8;
       --text-muted: #777;
       --border: #282828;
@@ -234,6 +236,13 @@
       margin-bottom: 10px;
     }
 
+    .card-top-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
     .genre-badge {
       font-size: 10px;
       font-weight: 600;
@@ -247,6 +256,17 @@
     .station-card.playing .genre-badge {
       background: rgba(232,66,10,0.2);
       color: var(--orange);
+    }
+
+    .sxm-badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #fff;
+      background: var(--sxm-blue);
+      padding: 2px 6px;
+      border-radius: 4px;
     }
 
     .eq-bars {
@@ -317,6 +337,43 @@
       margin-bottom: 12px;
     }
 
+    /* ── Search source tabs ── */
+    .search-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-tab-btn {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+    .search-tab-btn:hover { border-color: var(--orange); color: var(--text); }
+    .search-tab-btn.active {
+      border-color: var(--orange);
+      background: var(--orange-dim);
+      color: var(--orange);
+    }
+    .search-tab-btn.sxm-tab.active {
+      border-color: var(--sxm-blue);
+      background: var(--sxm-blue-dim);
+      color: #6699ff;
+    }
+
+    /* ── Search panes ── */
+    .search-pane { display: none; }
+    .search-pane.active { display: block; }
+
     .search-row {
       display: flex;
       gap: 8px;
@@ -371,6 +428,9 @@
       align-items: center;
       gap: 10px;
     }
+    .result-card.sxm-card {
+      border-left: 3px solid var(--sxm-blue);
+    }
 
     .result-info { min-width: 0; flex: 1; }
     .result-name {
@@ -397,6 +457,116 @@
     }
     .add-btn:hover { background: var(--orange); color: #fff; }
     .add-btn:disabled { border-color: var(--text-muted); color: var(--text-muted); cursor: default; }
+
+    /* ── SiriusXM pane ── */
+    .sxm-login-card {
+      background: var(--surface);
+      border: 1px solid var(--sxm-blue);
+      border-radius: 14px;
+      padding: 28px 24px;
+      max-width: 360px;
+    }
+
+    .sxm-login-card h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 1.5px;
+      color: #6699ff;
+      margin-bottom: 6px;
+    }
+
+    .sxm-login-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .sxm-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .sxm-input:focus { border-color: var(--sxm-blue); }
+    .sxm-input::placeholder { color: var(--text-muted); }
+
+    .sxm-login-btn {
+      width: 100%;
+      padding: 10px 0;
+      background: var(--sxm-blue);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .sxm-login-btn:hover { background: #2828b8; }
+    .sxm-login-btn:disabled { opacity: 0.5; cursor: default; }
+
+    .sxm-error {
+      color: #c0392b;
+      font-size: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+    .sxm-error.show { display: block; }
+
+    .sxm-logged-in-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .sxm-user-info {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .sxm-user-info strong {
+      color: #6699ff;
+    }
+
+    .sxm-logout-btn {
+      padding: 6px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .sxm-logout-btn:hover { border-color: #c0392b; color: #c0392b; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Volume bar (fixed bottom) ── */
     .volume-bar {
@@ -627,12 +797,77 @@
   <!-- Search -->
   <div class="search-section">
     <h2>Find Stations</h2>
-    <div class="search-row">
-      <input class="search-input" id="searchInput" type="text" placeholder="Search station name…" />
-      <input class="search-input" id="searchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
-      <button class="search-btn" id="searchBtn">Search</button>
+
+    <!-- Source tabs -->
+    <div class="search-tabs">
+      <button class="search-tab-btn active" data-pane="all">All</button>
+      <button class="search-tab-btn" data-pane="radiobrowser">Radio Browser</button>
+      <button class="search-tab-btn" data-pane="somafm">SomaFM</button>
+      <button class="search-tab-btn" data-pane="radiogarden">Radio Garden</button>
+      <button class="search-tab-btn sxm-tab" data-pane="siriusxm">SiriusXM</button>
     </div>
-    <div class="search-results" id="searchResults"></div>
+
+    <!-- All sources pane -->
+    <div class="search-pane active" id="pane-all">
+      <div class="search-row">
+        <input class="search-input" id="searchInput" type="text" placeholder="Search station name…" />
+        <input class="search-input" id="searchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
+        <button class="search-btn" id="searchBtn">Search</button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Radio Browser pane -->
+    <div class="search-pane" id="pane-radiobrowser">
+      <div class="search-row">
+        <input class="search-input" id="rbSearchInput" type="text" placeholder="Search station name…" />
+        <input class="search-input" id="rbSearchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
+        <button class="search-btn" id="rbSearchBtn">Search</button>
+      </div>
+      <div class="search-results" id="rbSearchResults"></div>
+    </div>
+
+    <!-- SomaFM pane -->
+    <div class="search-pane" id="pane-somafm">
+      <div style="margin-bottom:10px;font-size:13px;color:var(--text-muted)">Curated internet radio channels from SomaFM</div>
+      <div class="search-results" id="somaResults"></div>
+    </div>
+
+    <!-- Radio Garden pane -->
+    <div class="search-pane" id="pane-radiogarden">
+      <div class="search-row">
+        <input class="search-input" id="rgSearchInput" type="text" placeholder="Search Radio Garden…" />
+        <button class="search-btn" id="rgSearchBtn">Search</button>
+      </div>
+      <div class="search-results" id="rgSearchResults"></div>
+    </div>
+
+    <!-- SiriusXM pane -->
+    <div class="search-pane" id="pane-siriusxm">
+      <!-- Login form — shown when not logged in -->
+      <div id="sxmLoginSection">
+        <div class="sxm-login-card">
+          <h3>SiriusXM</h3>
+          <p>Sign in with your SiriusXM account to browse channels.</p>
+          <input class="sxm-input" id="sxmUsername" type="text" placeholder="Username / Email" autocomplete="username" />
+          <input class="sxm-input" id="sxmPassword" type="password" placeholder="Password" autocomplete="current-password" />
+          <button class="sxm-login-btn" id="sxmLoginBtn">
+            <span id="sxmLoginLabel">Sign In</span>
+          </button>
+          <div class="sxm-error" id="sxmLoginError"></div>
+        </div>
+      </div>
+
+      <!-- Channel list — shown when logged in -->
+      <div id="sxmChannelSection" style="display:none">
+        <div class="sxm-logged-in-bar">
+          <div class="sxm-user-info">Signed in as <strong id="sxmUsernameDisplay"></strong></div>
+          <button class="sxm-logout-btn" id="sxmLogoutBtn">Sign Out</button>
+        </div>
+        <div class="search-results" id="sxmChannelResults"></div>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -647,7 +882,7 @@
   <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" style="--vol-pct:80%" />
   <button class="vol-btn" id="volUp">+</button>
   <span class="vol-number" id="volNumber">80</span>
-  <button class="vol-stop-btn" id="stopBtn">■ Stop</button>
+  <button class="vol-stop-btn" id="stopBtn">&#9646; Stop</button>
 </div>
 
 <!-- Add city modal -->
@@ -674,6 +909,11 @@ let volume = 80;
 let activeCity = 'All';
 let dragSrcIndex = null;
 let volDebounce = null;
+let activeSearchPane = 'all';
+let somaLoaded = false;
+let sxmLoggedIn = false;
+let sxmUsername = '';
+let sxmChannelsLoaded = false;
 
 // ── Toast ──
 function showToast(msg, success = true) {
@@ -756,7 +996,6 @@ async function playStation(id) {
 // ── City tabs ──
 function renderCityTabs() {
   const bar = document.getElementById('cityBar');
-  // Remove old dynamic tabs
   bar.querySelectorAll('.city-tab').forEach(t => t.remove());
   const addBtn = document.getElementById('addCityBtn');
 
@@ -797,7 +1036,7 @@ function renderGrid() {
     return;
   }
 
-  filtered.forEach((station, i) => {
+  filtered.forEach((station) => {
     const card = document.createElement('div');
     card.className = 'station-card' + (station.id === currentStationId ? ' playing' : '');
     card.style.setProperty('--card-color', station.color || '#555');
@@ -805,9 +1044,14 @@ function renderGrid() {
     card.dataset.id = station.id;
     card.dataset.index = stations.indexOf(station);
 
+    const isSxm = station.source === 'siriusxm';
+
     card.innerHTML = `
       <div class="card-top">
-        <span class="genre-badge">${station.genre || 'Radio'}</span>
+        <div class="card-top-left">
+          <span class="genre-badge">${station.genre || 'Radio'}</span>
+          ${isSxm ? '<span class="sxm-badge">SXM</span>' : ''}
+        </div>
         <div class="eq-bars">
           <span style="height:8px"></span>
           <span style="height:14px"></span>
@@ -828,7 +1072,6 @@ function renderGrid() {
       </div>
     `;
 
-    // Play button
     card.querySelector('.play-btn').addEventListener('click', e => {
       e.stopPropagation();
       playStation(station.id);
@@ -889,7 +1132,52 @@ document.getElementById('cityInput').addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('cityCancelBtn').click();
 });
 
-// ── Search ──
+// ── Search tab switching ──
+document.querySelectorAll('.search-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pane = btn.dataset.pane;
+    document.querySelectorAll('.search-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.search-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pane-' + pane).classList.add('active');
+    activeSearchPane = pane;
+
+    // Auto-load SomaFM on first open
+    if (pane === 'somafm' && !somaLoaded) {
+      loadSomaFM();
+    }
+    // Load SXM channels if already logged in
+    if (pane === 'siriusxm') {
+      refreshSxmPane();
+    }
+  });
+});
+
+// ── Result card builder ──
+function buildResultCard(station, container) {
+  const card = document.createElement('div');
+  card.className = 'result-card' + (station.source === 'siriusxm' ? ' sxm-card' : '');
+  const alreadySaved = stations.some(s => s.id === station.id || s.url === station.url);
+  const isSxm = station.source === 'siriusxm';
+  card.innerHTML = `
+    <div class="result-info">
+      <div class="result-name">${station.name}${isSxm ? ' <span class="sxm-badge">SXM</span>' : ''}</div>
+      <div class="result-meta">${[station.genre, station.city].filter(Boolean).join(' · ')}</div>
+    </div>
+    <button class="add-btn" ${alreadySaved ? 'disabled' : ''}>${alreadySaved ? 'Saved' : '+ Add'}</button>
+  `;
+  card.querySelector('.add-btn').addEventListener('click', async function() {
+    stations.push(station);
+    await api('POST', '/stations', stations);
+    this.textContent = 'Saved';
+    this.disabled = true;
+    renderGrid();
+    showToast(`Added ${station.name}`);
+  });
+  container.appendChild(card);
+}
+
+// ── All-source search ──
 document.getElementById('searchBtn').addEventListener('click', doSearch);
 document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') doSearch();
@@ -903,48 +1191,225 @@ async function doSearch() {
   const btn = document.getElementById('searchBtn');
   btn.disabled = true;
   btn.textContent = 'Searching…';
-  document.getElementById('searchResults').innerHTML = '';
+  const container = document.getElementById('searchResults');
+  container.innerHTML = '';
 
   try {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams({ source: 'all' });
     if (q) params.set('q', q);
     if (city) params.set('city', city);
     const results = await fetch('/api/search?' + params).then(r => r.json());
 
-    const container = document.getElementById('searchResults');
     if (!Array.isArray(results) || results.length === 0) {
       container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
       return;
     }
-
-    results.forEach(station => {
-      const card = document.createElement('div');
-      card.className = 'result-card';
-      const alreadySaved = stations.some(s => s.id === station.id || s.url === station.url);
-      card.innerHTML = `
-        <div class="result-info">
-          <div class="result-name">${station.name}</div>
-          <div class="result-meta">${[station.genre, station.city].filter(Boolean).join(' · ')}</div>
-        </div>
-        <button class="add-btn" ${alreadySaved ? 'disabled' : ''}>${alreadySaved ? 'Saved' : '+ Add'}</button>
-      `;
-      card.querySelector('.add-btn').addEventListener('click', async function() {
-        stations.push(station);
-        await api('POST', '/stations', stations);
-        this.textContent = 'Saved';
-        this.disabled = true;
-        renderGrid();
-        showToast(`Added ${station.name}`);
-      });
-      container.appendChild(card);
-    });
+    results.forEach(s => buildResultCard(s, container));
   } catch(e) {
-    document.getElementById('searchResults').innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
+    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
   } finally {
     btn.disabled = false;
     btn.textContent = 'Search';
   }
 }
+
+// ── Radio Browser pane search ──
+document.getElementById('rbSearchBtn').addEventListener('click', doRbSearch);
+document.getElementById('rbSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doRbSearch();
+});
+
+async function doRbSearch() {
+  const q = document.getElementById('rbSearchInput').value.trim();
+  const city = document.getElementById('rbSearchCity').value.trim();
+  if (!q && !city) return;
+
+  const btn = document.getElementById('rbSearchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Searching…';
+  const container = document.getElementById('rbSearchResults');
+  container.innerHTML = '';
+
+  try {
+    const params = new URLSearchParams({ source: 'radiobrowser' });
+    if (q) params.set('q', q);
+    if (city) params.set('city', city);
+    const results = await fetch('/api/search?' + params).then(r => r.json());
+
+    if (!Array.isArray(results) || results.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
+      return;
+    }
+    results.forEach(s => buildResultCard(s, container));
+  } catch(e) {
+    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Search';
+  }
+}
+
+// ── SomaFM pane ──
+async function loadSomaFM() {
+  somaLoaded = true;
+  const container = document.getElementById('somaResults');
+  container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">Loading SomaFM channels…</div>';
+  try {
+    const results = await fetch('/api/search/somafm').then(r => r.json());
+    container.innerHTML = '';
+    if (!Array.isArray(results) || results.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No SomaFM channels found.</div>';
+      return;
+    }
+    results.forEach(s => buildResultCard(s, container));
+  } catch(e) {
+    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Failed to load SomaFM. Check your connection.</div>';
+  }
+}
+
+// ── Radio Garden pane ──
+document.getElementById('rgSearchBtn').addEventListener('click', doRgSearch);
+document.getElementById('rgSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doRgSearch();
+});
+
+async function doRgSearch() {
+  const q = document.getElementById('rgSearchInput').value.trim();
+  if (!q) return;
+
+  const btn = document.getElementById('rgSearchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Searching…';
+  const container = document.getElementById('rgSearchResults');
+  container.innerHTML = '';
+
+  try {
+    const params = new URLSearchParams({ q });
+    const results = await fetch('/api/search/radiogarden?' + params).then(r => r.json());
+
+    if (!Array.isArray(results) || results.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
+      return;
+    }
+    results.forEach(s => buildResultCard(s, container));
+  } catch(e) {
+    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Search';
+  }
+}
+
+// ── SiriusXM pane ──
+async function refreshSxmPane() {
+  try {
+    const status = await fetch('/api/sxm/status').then(r => r.json());
+    sxmLoggedIn = status.logged_in;
+    sxmUsername = status.username || '';
+  } catch(e) {
+    sxmLoggedIn = false;
+  }
+
+  const loginSection = document.getElementById('sxmLoginSection');
+  const channelSection = document.getElementById('sxmChannelSection');
+
+  if (sxmLoggedIn) {
+    loginSection.style.display = 'none';
+    channelSection.style.display = 'block';
+    document.getElementById('sxmUsernameDisplay').textContent = sxmUsername;
+    if (!sxmChannelsLoaded) {
+      loadSxmChannels();
+    }
+  } else {
+    loginSection.style.display = 'block';
+    channelSection.style.display = 'none';
+    sxmChannelsLoaded = false;
+  }
+}
+
+async function loadSxmChannels() {
+  sxmChannelsLoaded = true;
+  const container = document.getElementById('sxmChannelResults');
+  container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">Loading channels…</div>';
+  try {
+    const results = await fetch('/api/sxm/channels').then(r => r.json());
+    container.innerHTML = '';
+    if (results.error) {
+      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
+      return;
+    }
+    if (!Array.isArray(results) || results.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No channels available.</div>';
+      return;
+    }
+    results.forEach(s => buildResultCard(s, container));
+  } catch(e) {
+    sxmChannelsLoaded = false;
+    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Failed to load channels.</div>';
+  }
+}
+
+// SXM login
+document.getElementById('sxmLoginBtn').addEventListener('click', async () => {
+  const username = document.getElementById('sxmUsername').value.trim();
+  const password = document.getElementById('sxmPassword').value.trim();
+  const errEl = document.getElementById('sxmLoginError');
+  const btn = document.getElementById('sxmLoginBtn');
+  const label = document.getElementById('sxmLoginLabel');
+
+  errEl.className = 'sxm-error';
+
+  if (!username || !password) {
+    errEl.textContent = 'Please enter your username and password.';
+    errEl.className = 'sxm-error show';
+    return;
+  }
+
+  btn.disabled = true;
+  label.textContent = 'Signing in…';
+  btn.innerHTML = '<div class="spinner"></div><span>Signing in…</span>';
+
+  try {
+    const res = await fetch('/api/sxm/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    }).then(r => r.json());
+
+    if (res.ok) {
+      sxmChannelsLoaded = false;
+      await refreshSxmPane();
+      showToast('Signed in to SiriusXM');
+    } else {
+      errEl.textContent = res.error || 'Login failed. Check your credentials.';
+      errEl.className = 'sxm-error show';
+    }
+  } catch(e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.className = 'sxm-error show';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span id="sxmLoginLabel">Sign In</span>';
+  }
+});
+
+document.getElementById('sxmPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('sxmLoginBtn').click();
+});
+
+// SXM logout
+document.getElementById('sxmLogoutBtn').addEventListener('click', async () => {
+  try {
+    await fetch('/api/sxm/logout', { method: 'POST' });
+    sxmLoggedIn = false;
+    sxmChannelsLoaded = false;
+    document.getElementById('sxmChannelResults').innerHTML = '';
+    await refreshSxmPane();
+    showToast('Signed out of SiriusXM');
+  } catch(e) {
+    showToast('Logout failed', false);
+  }
+});
 
 // ── Status polling ──
 async function pollStatus() {

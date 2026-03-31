@@ -14,12 +14,22 @@ app = Flask(__name__, static_folder='static')
 STATIONS_FILE = os.environ.get('STATIONS_FILE', '/data/stations.json')
 CITIES_FILE = os.environ.get('CITIES_FILE', '/data/cities.json')
 LAYOUT_FILE = os.environ.get('LAYOUT_FILE', '/data/streamdeck_layout.json')
+SXM_CREDS_FILE = '/data/siriusxm.json'
 MPV_SOCKET = '/tmp/mpv-socket'
 
 _current_station = None
 _current_volume = 80
 _mpv_process = None
 _mpv_lock = threading.Lock()
+
+_sxm_client = None
+_sxm_process = None
+
+try:
+    from sxm.client import SXMClient
+    SXM_AVAILABLE = True
+except ImportError:
+    SXM_AVAILABLE = False
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +102,129 @@ def _start_mpv(url: str):
     _mpv_process = subprocess.Popen(cmd, env=env,
                                     stdout=subprocess.DEVNULL,
                                     stderr=subprocess.DEVNULL)
+
+
+# ---------------------------------------------------------------------------
+# SXM helpers
+# ---------------------------------------------------------------------------
+
+def _stop_sxm_proxy():
+    global _sxm_process
+    if _sxm_process is not None:
+        try:
+            _sxm_process.terminate()
+            _sxm_process.wait(timeout=3)
+        except Exception:
+            try:
+                _sxm_process.kill()
+            except Exception:
+                pass
+        _sxm_process = None
+
+
+def _start_sxm_proxy(username: str, password: str):
+    global _sxm_process
+    _stop_sxm_proxy()
+    _sxm_process = subprocess.Popen(
+        ['python3', '-m', 'sxm.cli', username, password,
+         '--port', '9999', '--host', '0.0.0.0'],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def _sxm_is_logged_in() -> bool:
+    return os.path.exists(SXM_CREDS_FILE)
+
+
+def _autostart_sxm():
+    """Called at startup — re-launch proxy if credentials exist."""
+    if os.path.exists(SXM_CREDS_FILE):
+        creds = _load_json(SXM_CREDS_FILE, {})
+        username = creds.get('username', '')
+        password = creds.get('password', '')
+        if username and password:
+            _start_sxm_proxy(username, password)
+
+
+# Hard-coded channel list that mirrors what sxm-player exposes.
+# If the sxm library is importable we use it directly; otherwise fall back.
+_SXM_CHANNEL_FALLBACK = [
+    {'id': 'siriushits1', 'name': 'Hits 1', 'genre': 'Pop'},
+    {'id': 'thebeat', 'name': 'The Beat', 'genre': 'Hip-Hop'},
+    {'id': 'octane', 'name': 'Octane', 'genre': 'Rock'},
+    {'id': 'lithium', 'name': 'Lithium', 'genre': "90's Alt"},
+    {'id': '1stwave', 'name': '1st Wave', 'genre': 'New Wave'},
+    {'id': 'altcountry', 'name': 'The Highway', 'genre': 'Country'},
+    {'id': 'siriuscountry', 'name': 'Prime Country', 'genre': 'Classic Country'},
+    {'id': 'willies', 'name': "Willie's Roadhouse", 'genre': 'Country'},
+    {'id': 'classicvinyl', 'name': 'Classic Vinyl', 'genre': 'Classic Rock'},
+    {'id': 'classicrewind', 'name': 'Classic Rewind', 'genre': 'Classic Rock'},
+    {'id': 'thebridge', 'name': 'The Bridge', 'genre': 'Soft Rock'},
+    {'id': 'jazzcat', 'name': 'Real Jazz', 'genre': 'Jazz'},
+    {'id': 'soultown', 'name': 'Soul Town', 'genre': 'Soul/R&B'},
+    {'id': 'thevibe', 'name': 'The Vibe', 'genre': 'R&B'},
+    {'id': 'siriusflyby', 'name': 'FlyBy', 'genre': 'Pop'},
+    {'id': 'bpmradio', 'name': 'BPM', 'genre': 'Dance/EDM'},
+    {'id': 'electricarea', 'name': 'Electric Area', 'genre': 'EDM'},
+    {'id': 'cinemagic', 'name': 'Cinemagic', 'genre': 'Soundtracks'},
+    {'id': 'pops', 'name': 'Symphony Hall', 'genre': 'Classical'},
+    {'id': 'metrocast', 'name': 'Met Opera Radio', 'genre': 'Opera'},
+    {'id': 'latinpop', 'name': 'Caliente', 'genre': 'Latin Pop'},
+    {'id': 'reggaeton', 'name': 'Pitbull\'s Globalization', 'genre': 'Reggaeton'},
+    {'id': 'radiorythme', 'name': 'Radio Rythme', 'genre': 'French'},
+    {'id': 'kidsstuff', 'name': "Kid's Stuff", 'genre': 'Kids'},
+    {'id': 'hadithhits', 'name': 'Backspin', 'genre': 'Old School Hip-Hop'},
+    {'id': 'ch18', 'name': 'Turbo', 'genre': 'Dance'},
+    {'id': 'ch22', 'name': 'Shade 45', 'genre': 'Hip-Hop'},
+    {'id': 'ch26', 'name': 'Hip-Hop Nation', 'genre': 'Hip-Hop'},
+    {'id': 'ch33', 'name': 'The Pulse', 'genre': 'Pop Hits'},
+    {'id': 'ch36', 'name': 'Pop2K', 'genre': '2000s Pop'},
+]
+
+
+def _get_sxm_channels():
+    """Return list of SXM channel dicts. Uses library if available."""
+    if SXM_AVAILABLE:
+        try:
+            creds = _load_json(SXM_CREDS_FILE, {})
+            username = creds.get('username', '')
+            password = creds.get('password', '')
+            client = SXMClient(username, password)
+            raw_channels = client.channels
+            channels = []
+            for ch in raw_channels:
+                ch_id = getattr(ch, 'channel_id', None) or getattr(ch, 'id', '')
+                name = getattr(ch, 'name', '') or str(ch)
+                genre = getattr(ch, 'genre_name', '') or ''
+                channels.append({
+                    'id': ch_id,
+                    'name': name,
+                    'url': f'http://localhost:9999/{ch_id}/playlist.m3u8',
+                    'genre': genre,
+                    'color': '#1a1a8c',
+                    'source': 'siriusxm',
+                    'slogan': genre,
+                    'city': 'SiriusXM',
+                })
+            return channels
+        except Exception:
+            pass
+
+    # Fallback to hard-coded list
+    return [
+        {
+            'id': ch['id'],
+            'name': ch['name'],
+            'url': f"http://localhost:9999/{ch['id']}/playlist.m3u8",
+            'genre': ch['genre'],
+            'color': '#1a1a8c',
+            'source': 'siriusxm',
+            'slogan': ch['genre'],
+            'city': 'SiriusXM',
+        }
+        for ch in _SXM_CHANNEL_FALLBACK
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -194,19 +327,63 @@ def api_status():
 
 
 # ---------------------------------------------------------------------------
-# API – Search (Radio Browser)
+# API – SiriusXM
+# ---------------------------------------------------------------------------
+
+@app.route('/api/sxm/login', methods=['POST'])
+def api_sxm_login():
+    data = request.get_json(force=True)
+    username = (data.get('username') or '').strip()
+    password = (data.get('password') or '').strip()
+
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+
+    _save_json(SXM_CREDS_FILE, {'username': username, 'password': password})
+    _start_sxm_proxy(username, password)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/sxm/logout', methods=['POST'])
+def api_sxm_logout():
+    _stop_sxm_proxy()
+    try:
+        os.unlink(SXM_CREDS_FILE)
+    except FileNotFoundError:
+        pass
+    return jsonify({'ok': True})
+
+
+@app.route('/api/sxm/status', methods=['GET'])
+def api_sxm_status():
+    logged_in = _sxm_is_logged_in()
+    username = ''
+    if logged_in:
+        creds = _load_json(SXM_CREDS_FILE, {})
+        username = creds.get('username', '')
+    return jsonify({'logged_in': logged_in, 'username': username})
+
+
+@app.route('/api/sxm/channels', methods=['GET'])
+def api_sxm_channels():
+    if not _sxm_is_logged_in():
+        return jsonify({'error': 'Not logged in'}), 401
+    return jsonify(_get_sxm_channels())
+
+
+# ---------------------------------------------------------------------------
+# API – Search (Radio Browser + SomaFM + Radio Garden)
 # ---------------------------------------------------------------------------
 
 RADIO_BROWSER_BASE = 'https://de1.api.radio-browser.info/json'
+SOMAFM_API = 'https://api.somafm.com/channels.json'
+RADIO_GARDEN_SEARCH = 'https://radio.garden/api/ara/content/search'
+RADIO_GARDEN_LISTEN = 'https://radio.garden/api/ara/content/listen/{id}/channel.mp3'
 
 
-@app.route('/api/search', methods=['GET'])
-def api_search():
-    q = request.args.get('q', '').strip()
-    city = request.args.get('city', '').strip()
-
+def _search_radiobrowser(q='', city='', limit=24):
     params = {
-        'limit': 24,
+        'limit': limit,
         'hidebroken': 'true',
         'order': 'clickcount',
         'reverse': 'true',
@@ -216,17 +393,14 @@ def api_search():
     if city:
         params['state'] = city
 
-    try:
-        resp = requests.get(
-            f'{RADIO_BROWSER_BASE}/stations/search',
-            params=params,
-            timeout=10,
-            headers={'User-Agent': 'NashvilleRadio/1.0'},
-        )
-        resp.raise_for_status()
-        raw = resp.json()
-    except Exception as exc:
-        return jsonify({'error': str(exc)}), 502
+    resp = requests.get(
+        f'{RADIO_BROWSER_BASE}/stations/search',
+        params=params,
+        timeout=10,
+        headers={'User-Agent': 'NashvilleRadio/1.0'},
+    )
+    resp.raise_for_status()
+    raw = resp.json()
 
     results = []
     for s in raw:
@@ -243,9 +417,164 @@ def api_search():
             'city': (s.get('state') or s.get('country') or '').strip(),
             'url': url,
             'color': '#e8420a',
+            'source': 'radiobrowser',
         })
+    return results
 
-    return jsonify(results)
+
+def _search_somafm():
+    resp = requests.get(SOMAFM_API, timeout=10,
+                        headers={'User-Agent': 'NashvilleRadio/1.0'})
+    resp.raise_for_status()
+    data = resp.json()
+
+    results = []
+    for ch in data.get('channels', []):
+        # Prefer HLS, then mp3
+        url = ''
+        playlists = ch.get('playlists', [])
+        for pl in playlists:
+            if pl.get('format') == 'aac' and 'url' in pl:
+                url = pl['url']
+                break
+        if not url:
+            for pl in playlists:
+                if pl.get('format') == 'mp3' and 'url' in pl:
+                    url = pl['url']
+                    break
+        if not url and playlists:
+            url = playlists[0].get('url', '')
+        if not url:
+            continue
+
+        results.append({
+            'id': 'somafm-' + ch.get('id', ''),
+            'name': ch.get('title', '').strip(),
+            'slogan': ch.get('description', '')[:60],
+            'genre': ch.get('genre', '').strip().title(),
+            'city': 'SomaFM',
+            'url': url,
+            'color': '#2d2d2d',
+            'source': 'somafm',
+        })
+    return results
+
+
+def _search_radiogarden(q='', lat='', lng=''):
+    params = {}
+    if q:
+        params['q'] = q
+    if lat:
+        params['lat'] = lat
+    if lng:
+        params['lng'] = lng
+
+    resp = requests.get(
+        RADIO_GARDEN_SEARCH,
+        params=params,
+        timeout=10,
+        headers={'User-Agent': 'NashvilleRadio/1.0'},
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    results = []
+    hits = (data.get('hits') or {}).get('hits') or []
+    for hit in hits:
+        src = hit.get('_source', {})
+        ch_id = src.get('channelId') or hit.get('_id', '')
+        name = src.get('title', '').strip()
+        city_name = (src.get('place') or {}).get('title', '')
+        if not ch_id or not name:
+            continue
+        url = RADIO_GARDEN_LISTEN.format(id=ch_id)
+        results.append({
+            'id': 'rg-' + ch_id,
+            'name': name,
+            'slogan': city_name,
+            'genre': 'Radio Garden',
+            'city': city_name,
+            'url': url,
+            'color': '#2e7d32',
+            'source': 'radiogarden',
+        })
+    return results
+
+
+@app.route('/api/search', methods=['GET'])
+def api_search():
+    q = request.args.get('q', '').strip()
+    city = request.args.get('city', '').strip()
+    source = request.args.get('source', '').strip().lower()
+
+    if not source:
+        source = 'radiobrowser'
+
+    if source == 'radiobrowser':
+        try:
+            return jsonify(_search_radiobrowser(q=q, city=city))
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 502
+
+    if source == 'somafm':
+        try:
+            return jsonify(_search_somafm())
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 502
+
+    if source == 'radiogarden':
+        lat = request.args.get('lat', '').strip()
+        lng = request.args.get('lng', '').strip()
+        try:
+            return jsonify(_search_radiogarden(q=q, lat=lat, lng=lng))
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 502
+
+    if source == 'all':
+        combined = []
+        seen_urls = set()
+
+        def _add(items):
+            for item in items:
+                if item.get('url') and item['url'] not in seen_urls:
+                    seen_urls.add(item['url'])
+                    combined.append(item)
+
+        try:
+            _add(_search_radiobrowser(q=q, city=city))
+        except Exception:
+            pass
+        try:
+            _add(_search_somafm())
+        except Exception:
+            pass
+        try:
+            _add(_search_radiogarden(q=q))
+        except Exception:
+            pass
+
+        return jsonify(combined)
+
+    return jsonify({'error': f'Unknown source: {source}'}), 400
+
+
+@app.route('/api/search/somafm', methods=['GET'])
+def api_search_somafm():
+    try:
+        return jsonify(_search_somafm())
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 502
+
+
+@app.route('/api/search/radiogarden', methods=['GET'])
+def api_search_radiogarden():
+    q = request.args.get('q', '').strip()
+    lat = request.args.get('lat', '').strip()
+    lng = request.args.get('lng', '').strip()
+    try:
+        return jsonify(_search_radiogarden(q=q, lat=lat, lng=lng))
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 502
 
 
 # ---------------------------------------------------------------------------
@@ -267,4 +596,8 @@ def static_files(path):
 # ---------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    _autostart_sxm()
     app.run(host='0.0.0.0', port=5000, debug=True)
+else:
+    # Also auto-start when loaded by gunicorn
+    _autostart_sxm()
