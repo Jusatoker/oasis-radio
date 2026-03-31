@@ -1,5 +1,5 @@
 [Unit]
-Description=Nashville Radio Stream Deck Controller
+Description=Just Winging IT Homestead Stream Deck Controller
 After=network.target
 
 [Service]

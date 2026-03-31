@@ -76,6 +76,7 @@ def _start_mpv(url: str):
     _stop_mpv()
 
     env = os.environ.copy()
+    alsa_card = os.environ.get('ALSA_CARD', '0')
     cmd = [
         'mpv',
         f'--input-ipc-server={MPV_SOCKET}',
@@ -84,6 +85,8 @@ def _start_mpv(url: str):
         '--really-quiet',
         '--cache=yes',
         '--cache-secs=5',
+        f'--ao=alsa',
+        f'--audio-device=alsa/hw:{alsa_card},0',
         url,
     ]
     _mpv_process = subprocess.Popen(cmd, env=env,

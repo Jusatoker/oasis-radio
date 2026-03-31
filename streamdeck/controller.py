@@ -20,6 +20,7 @@ from PIL import Image, ImageDraw, ImageFont
 try:
     from StreamDeck.DeviceManager import DeviceManager
     from StreamDeck.Devices.StreamDeck import DialEventType, TouchscreenEventType
+    from StreamDeck.ImageHelpers import PILHelper
 except ImportError:
     print("ERROR: streamdeck library not found. Run: pip3 install streamdeck", file=sys.stderr)
     sys.exit(1)
@@ -118,7 +119,7 @@ def _hex_to_rgb(hex_color: str):
         return C_MUTED
 
 
-def _render_station_key(station: dict, playing: bool) -> bytes:
+def _render_station_key(station: dict, playing: bool) -> Image.Image:
     img = Image.new("RGB", KEY_SIZE, C_PLAYING if playing else C_BG)
     draw = ImageDraw.Draw(img)
 
@@ -133,7 +134,6 @@ def _render_station_key(station: dict, playing: bool) -> bytes:
 
     # Station name (split if long)
     name = station.get("name", "")
-    # Try to fit in two lines
     words = name.split()
     lines = []
     cur = ""
@@ -168,22 +168,18 @@ def _render_station_key(station: dict, playing: bool) -> bytes:
             draw.rectangle([bx + j*3, KEY_SIZE[1]//2 - h,
                             bx + j*3 + 2, KEY_SIZE[1]//2], fill=C_ORANGE)
 
-    buf = BytesIO()
-    img.save(buf, format="JPEG", quality=85)
-    return buf.getvalue()
+    return img
 
 
-def _render_empty_key(index: int) -> bytes:
+def _render_empty_key(index: int) -> Image.Image:
     img = Image.new("RGB", KEY_SIZE, C_BG)
     draw = ImageDraw.Draw(img)
     draw.text((KEY_SIZE[0]//2, KEY_SIZE[1]//2), str(index + 1),
               font=FONT_SMALL, fill=(40, 40, 40), anchor="mm")
-    buf = BytesIO()
-    img.save(buf, format="JPEG", quality=70)
-    return buf.getvalue()
+    return img
 
 
-def _render_key(key_index: int) -> bytes:
+def _render_key(key_index: int) -> Image.Image:
     slot = _layout.get("keys", {}).get(str(key_index))
     if slot and slot.get("type") == "station":
         station = _stations.get(slot["id"])
@@ -226,11 +222,10 @@ def _render_touch_strip():
     draw.text((bar_x + bar_w + 8, bar_y), vol_label,
               font=FONT_TINY, fill=C_MUTED, anchor="lm")
 
-    buf = BytesIO()
-    img.save(buf, format="JPEG", quality=85)
     try:
-        _deck.set_touchscreen_image(Image.open(BytesIO(buf.getvalue())),
-                                    0, 0, TOUCH_W, TOUCH_H)
+        ts_buf = BytesIO()
+        img.save(ts_buf, format="JPEG", quality=85)
+        _deck.set_touchscreen_image(ts_buf.getvalue(), 0, 0, TOUCH_W, TOUCH_H)
     except Exception as exc:
         print(f"[touch] render failed: {exc}", file=sys.stderr)
 
@@ -241,9 +236,10 @@ def _render_all():
     with _deck:
         for i in range(8):
             try:
-                img_bytes = _render_key(i)
-                img = Image.open(BytesIO(img_bytes))
-                _deck.set_key_image(i, img)
+                pil_img = _render_key(i)
+                scaled = PILHelper.create_scaled_image(_deck, pil_img)
+                native = PILHelper.to_native_format(_deck, scaled)
+                _deck.set_key_image(i, native)
             except Exception as exc:
                 print(f"[render] key {i} failed: {exc}", file=sys.stderr)
     _render_touch_strip()

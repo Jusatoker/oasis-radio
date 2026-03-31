@@ -45,10 +45,13 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 ok "udev rules installed."
 
-# ── 4. Python Stream Deck controller deps ────────────────────────────────────
-info "Installing Python packages for Stream Deck controller…"
-pip3 install --user --quiet streamdeck pillow requests
-ok "Python packages installed."
+# ── 4. Python Stream Deck controller deps (venv) ─────────────────────────────
+info "Creating Python venv for Stream Deck controller…"
+VENV_DIR="$HOME/.venv/streamdeck"
+python3 -m venv "$VENV_DIR"
+"$VENV_DIR/bin/pip" install --quiet --upgrade pip
+"$VENV_DIR/bin/pip" install --quiet streamdeck pillow requests
+ok "Python venv created at $VENV_DIR with streamdeck, pillow, requests."
 
 # ── 5. Install project to /opt ────────────────────────────────────────────────
 info "Installing project to $INSTALL_DIR…"
@@ -86,8 +89,10 @@ ok "PulseAudio configured."
 # ── 7. Stream Deck systemd user service ───────────────────────────────────────
 info "Installing Stream Deck controller as systemd user service…"
 mkdir -p ~/.config/systemd/user
-# Patch ExecStart path to use install dir
-sed "s|/opt/nashville-radio|$INSTALL_DIR|g" \
+# Patch ExecStart to use the venv python and correct install dir
+sed \
+    -e "s|/opt/nashville-radio|$INSTALL_DIR|g" \
+    -e "s|/usr/bin/python3|$HOME/.venv/streamdeck/bin/python3|g" \
     "$INSTALL_DIR/setup/iheart-radio.service" \
     > ~/.config/systemd/user/"$SERVICE_NAME".service
 
