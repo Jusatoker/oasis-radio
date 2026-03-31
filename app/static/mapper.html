@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stream Deck Mapper — Nashville Radio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --surface3: #222222;
+      --orange: #e8420a;
+      --orange-dim: rgba(232,66,10,0.15);
+      --text: #f0ede8;
+      --text-muted: #666;
+      --border: #282828;
+      --radius: 10px;
+      --deck-bg: #1c1c1c;
+      --deck-body: #242424;
+      --deck-edge: #0e0e0e;
+      --key-bg: #0a0a0a;
+      --key-border: #3a3a3a;
+    }
+
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 2px;
+      color: var(--orange);
+    }
+    .logo span { color: var(--text); }
+    .logo-sep { color: var(--text-muted); margin: 0 6px; }
+    .page-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+    .spacer { flex: 1; }
+    .header-btns { display: flex; gap: 8px; }
+    .btn-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-pill:hover { border-color: var(--orange); color: var(--text); }
+    .btn-save {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+    }
+    .btn-save:hover { background: #c23508; border-color: #c23508; color: #fff; }
+
+    /* ── Layout ── */
+    .layout {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+      height: calc(100vh - 58px);
+    }
+
+    /* ── Station panel ── */
+    .station-panel {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .panel-header h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .station-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .station-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: grab;
+      transition: background 0.15s, border-color 0.15s;
+      margin-bottom: 2px;
+      user-select: none;
+    }
+    .station-item:hover {
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+    .station-item:active { cursor: grabbing; }
+
+    .station-item-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .station-item-info { min-width: 0; flex: 1; }
+    .station-item-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .station-item-genre {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .drag-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ── Deck area ── */
+    .deck-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      overflow: auto;
+    }
+
+    /* ── Stream Deck+ photorealistic body ── */
+    .streamdeck-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .streamdeck-body {
+      background: linear-gradient(160deg, var(--deck-body) 0%, var(--deck-bg) 60%, var(--deck-edge) 100%);
+      border-radius: 22px;
+      padding: 28px 24px 22px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 4px 8px rgba(0,0,0,0.6),
+        0 20px 60px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      position: relative;
+      width: 560px;
+    }
+
+    /* Top label */
+    .deck-brand {
+      text-align: center;
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.15);
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+
+    /* Key grid (4×2) */
+    .deck-keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .deck-key {
+      aspect-ratio: 1;
+      background: var(--key-bg);
+      border-radius: 8px;
+      border: 1.5px solid var(--key-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+      overflow: hidden;
+      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03);
+      min-height: 90px;
+    }
+    .deck-key.drag-over {
+      border-color: var(--orange);
+      background: rgba(232,66,10,0.12);
+    }
+    .deck-key.has-station {
+      border-color: rgba(255,255,255,0.12);
+    }
+    .deck-key.has-station:hover {
+      border-color: var(--orange);
+    }
+
+    .key-number {
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.15);
+      font-weight: 600;
+    }
+
+    .key-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .key-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .key-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .key-genre {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .key-empty-icon {
+      color: rgba(255,255,255,0.1);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .key-clear {
+      position: absolute;
+      top: 3px;
+      right: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(200,50,30,0.7);
+      color: #fff;
+      font-size: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .deck-key.has-station:hover .key-clear { display: flex; }
+
+    /* Touch strip */
+    .deck-touch-strip {
+      background: linear-gradient(90deg, #0d0d0d, #151515, #0d0d0d);
+      border-radius: 6px;
+      height: 28px;
+      margin-bottom: 12px;
+      border: 1px solid #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .touch-strip-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .touch-strip-bar {
+      flex: 1;
+      height: 3px;
+      background: linear-gradient(90deg, var(--orange), transparent);
+      border-radius: 2px;
+      opacity: 0.3;
+    }
+
+    /* Dials */
+    .deck-dials {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .deck-dial-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .deck-dial {
+      width: 100%;
+      aspect-ratio: 1;
+      background: radial-gradient(circle at 40% 35%, #2e2e2e, #141414);
+      border-radius: 50%;
+      border: 1.5px solid #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+      box-shadow:
+        0 3px 8px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      min-height: 70px;
+    }
+    .deck-dial::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      width: 4px;
+      height: 4px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 50%;
+    }
+
+    .deck-dial.drag-over {
+      border-color: var(--orange);
+      background: radial-gradient(circle at 40% 35%, rgba(232,66,10,0.2), #141414);
+    }
+
+    .dial-icon { font-size: 18px; line-height: 1; }
+    .dial-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-top: 3px;
+      text-align: center;
+    }
+
+    .deck-dial-wrap > .dial-slot-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Right panel ── */
+    .control-panel {
+      width: 200px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .control-panel h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 15px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor: grab;
+      transition: border-color 0.15s;
+      user-select: none;
+    }
+    .control-item:hover { border-color: var(--orange); }
+    .control-icon { font-size: 18px; width: 24px; text-align: center; }
+    .control-name { font-size: 13px; font-weight: 500; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 300;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: var(--orange); }
+
+    @media (max-width: 900px) {
+      .station-panel { width: 180px; }
+      .streamdeck-body { width: 100%; max-width: 480px; }
+      .control-panel { display: none; }
+    }
+    @media (max-width: 640px) {
+      .station-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Nashville<span> Radio</span></div>
+  <div class="logo-sep">/</div>
+  <div class="page-title">Stream Deck Mapper</div>
+  <div class="spacer"></div>
+  <div class="header-btns">
+    <a class="btn-pill" href="/">← Dashboard</a>
+    <button class="btn-pill btn-save" id="saveBtn">Save Layout</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Station list -->
+  <div class="station-panel">
+    <div class="panel-header">
+      <h3>Stations</h3>
+    </div>
+    <div class="station-list" id="stationList"></div>
+    <div class="drag-hint">Drag stations onto keys</div>
+  </div>
+
+  <!-- Deck -->
+  <div class="deck-area">
+    <div class="streamdeck-wrap">
+      <div class="streamdeck-body">
+        <div class="deck-brand">Stream Deck+</div>
+
+        <!-- 8 LCD keys (4×2) -->
+        <div class="deck-keys" id="deckKeys">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Touch strip -->
+        <div class="deck-touch-strip">
+          <span class="touch-strip-label">Now Playing</span>
+          <div class="touch-strip-bar"></div>
+          <span class="touch-strip-label">Vol</span>
+        </div>
+
+        <!-- 4 dials -->
+        <div class="deck-dials" id="deckDials">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls panel -->
+  <div class="control-panel">
+    <div>
+      <h3>Controls</h3>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="control-item" draggable="true" data-type="volume">
+          <span class="control-icon">🔊</span>
+          <span class="control-name">Volume</span>
+        </div>
+        <div class="control-item" draggable="true" data-type="mute">
+          <span class="control-icon">🔇</span>
+          <span class="control-name">Mute</span>
+        </div>
+        <div class="control-item" draggable="true" data-type="stop">
+          <span class="control-icon">⏹</span>
+          <span class="control-name">Stop</span>
+        </div>
+        <div class="control-item" draggable="true" data-type="page">
+          <span class="control-icon">📄</span>
+          <span class="control-name">Page Flip</span>
+        </div>
+        <div class="control-item" draggable="true" data-type="empty">
+          <span class="control-icon">⬜</span>
+          <span class="control-name">Empty</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let stations = [];
+let layout = { keys: {}, dials: {} };
+let dragData = null;
+
+const DIAL_META = {
+  volume: { icon: '🔊', label: 'Volume' },
+  mute:   { icon: '🔇', label: 'Mute' },
+  stop:   { icon: '⏹', label: 'Stop' },
+  page:   { icon: '📄', label: 'Page' },
+  empty:  { icon: '·', label: 'Empty' },
+};
+
+// ── Toast ──
+function showToast(msg, ok = true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (ok ? ' success' : '');
+  setTimeout(() => { t.className = 'toast'; }, 2200);
+}
+
+// ── API ──
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch('/api' + path, opts);
+  return r.json();
+}
+
+// ── Render station list ──
+function renderStationList() {
+  const list = document.getElementById('stationList');
+  list.innerHTML = '';
+  stations.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'station-item';
+    item.draggable = true;
+    item.innerHTML = `
+      <div class="station-item-dot" style="background:${s.color || '#555'}"></div>
+      <div class="station-item-info">
+        <div class="station-item-name">${s.name}</div>
+        <div class="station-item-genre">${s.genre || ''}</div>
+      </div>
+    `;
+    item.addEventListener('dragstart', e => {
+      dragData = { source: 'station', id: s.id };
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+    list.appendChild(item);
+  });
+}
+
+// ── Render deck keys ──
+function renderKeys() {
+  const grid = document.getElementById('deckKeys');
+  grid.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const slot = layout.keys[String(i)];
+    const station = slot?.type === 'station'
+      ? stations.find(s => s.id === slot.id)
+      : null;
+
+    const key = document.createElement('div');
+    key.className = 'deck-key' + (station ? ' has-station' : '');
+    key.dataset.slot = i;
+
+    key.innerHTML = `<span class="key-number">${i + 1}</span>`;
+
+    if (station) {
+      key.innerHTML += `
+        <div class="key-content">
+          <div class="key-color-dot" style="background:${station.color || '#555'}"></div>
+          <div class="key-name">${station.name}</div>
+          <div class="key-genre">${station.genre || ''}</div>
+        </div>
+        <div class="key-clear" data-key="${i}" title="Clear">✕</div>
+      `;
+    } else {
+      key.innerHTML += `<div class="key-empty-icon">+</div>`;
+    }
+
+    // Drag events
+    key.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      key.classList.add('drag-over');
+    });
+    key.addEventListener('dragleave', () => key.classList.remove('drag-over'));
+    key.addEventListener('drop', e => {
+      e.preventDefault();
+      key.classList.remove('drag-over');
+      if (!dragData) return;
+      if (dragData.source === 'station') {
+        layout.keys[String(i)] = { type: 'station', id: dragData.id };
+      } else if (dragData.source === 'key') {
+        // swap
+        const srcSlot = dragData.slot;
+        const tmp = layout.keys[String(i)];
+        layout.keys[String(i)] = layout.keys[String(srcSlot)] || { type: 'empty' };
+        layout.keys[String(srcSlot)] = tmp || { type: 'empty' };
+      }
+      dragData = null;
+      renderKeys();
+    });
+
+    // Drag from key
+    if (station) {
+      key.draggable = true;
+      key.addEventListener('dragstart', e => {
+        dragData = { source: 'key', slot: i };
+        e.dataTransfer.effectAllowed = 'move';
+      });
+    }
+
+    grid.appendChild(key);
+  }
+
+  // Clear buttons
+  grid.querySelectorAll('.key-clear').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = btn.dataset.key;
+      delete layout.keys[idx];
+      renderKeys();
+    });
+  });
+}
+
+// ── Render dials ──
+function renderDials() {
+  const grid = document.getElementById('deckDials');
+  grid.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const slot = layout.dials[String(i)] || { type: 'empty' };
+    const meta = DIAL_META[slot.type] || DIAL_META.empty;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'deck-dial-wrap';
+
+    const dial = document.createElement('div');
+    dial.className = 'deck-dial';
+    dial.dataset.dial = i;
+    dial.innerHTML = `
+      <span class="dial-icon">${meta.icon}</span>
+      <span class="dial-label">${meta.label}</span>
+    `;
+
+    dial.addEventListener('dragover', e => {
+      e.preventDefault();
+      dial.classList.add('drag-over');
+    });
+    dial.addEventListener('dragleave', () => dial.classList.remove('drag-over'));
+    dial.addEventListener('drop', e => {
+      e.preventDefault();
+      dial.classList.remove('drag-over');
+      if (!dragData) return;
+      // Only control items drop onto dials
+      if (dragData.source === 'control') {
+        layout.dials[String(i)] = { type: dragData.type };
+        dragData = null;
+        renderDials();
+      }
+    });
+
+    const label = document.createElement('div');
+    label.className = 'dial-slot-label';
+    label.textContent = `Dial ${i + 1}`;
+
+    wrap.appendChild(dial);
+    wrap.appendChild(label);
+    grid.appendChild(wrap);
+  }
+}
+
+// ── Control items drag ──
+document.querySelectorAll('.control-item').forEach(item => {
+  item.addEventListener('dragstart', e => {
+    dragData = { source: 'control', type: item.dataset.type };
+    e.dataTransfer.effectAllowed = 'copy';
+  });
+});
+
+// ── Save ──
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = 'Saving…';
+  try {
+    await api('POST', '/layout', layout);
+    showToast('Layout saved!');
+  } catch(e) {
+    showToast('Save failed', false);
+  } finally {
+    btn.textContent = 'Save Layout';
+  }
+});
+
+// ── Init ──
+async function init() {
+  try {
+    [stations, layout] = await Promise.all([
+      api('GET', '/stations'),
+      api('GET', '/layout'),
+    ]);
+    if (!layout.keys) layout.keys = {};
+    if (!layout.dials) layout.dials = {};
+  } catch(e) {
+    showToast('Could not load data', false);
+  }
+  renderStationList();
+  renderKeys();
+  renderDials();
+}
+
+init();
+</script>
+</body>
+</html>

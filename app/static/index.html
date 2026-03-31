@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nashville Radio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --surface3: #222222;
+      --orange: #e8420a;
+      --orange-dim: rgba(232,66,10,0.18);
+      --text: #f0ede8;
+      --text-muted: #777;
+      --border: #282828;
+      --radius: 10px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 2px;
+      color: var(--orange);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .logo span { color: var(--text); }
+
+    .now-playing-ticker {
+      flex: 1;
+      overflow: hidden;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .ticker-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .ticker-inner.active {
+      color: var(--orange);
+      animation: ticker-scroll 18s linear infinite;
+    }
+
+    @keyframes ticker-scroll {
+      0%   { transform: translateX(0); }
+      40%  { transform: translateX(0); }
+      60%  { transform: translateX(calc(-100% + 300px)); }
+      100% { transform: translateX(0); }
+    }
+
+    .eq-mini {
+      display: none;
+      gap: 2px;
+      align-items: flex-end;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    .eq-mini.active { display: flex; }
+    .eq-mini span {
+      width: 3px;
+      background: var(--orange);
+      border-radius: 2px;
+      animation: eqb 0.7s ease-in-out infinite alternate;
+    }
+    .eq-mini span:nth-child(2) { animation-delay: 0.15s; }
+    .eq-mini span:nth-child(3) { animation-delay: 0.3s; }
+    .eq-mini span:nth-child(4) { animation-delay: 0.1s; }
+
+    @keyframes eqb {
+      from { height: 3px; }
+      to   { height: 14px; }
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-pill:hover { border-color: var(--orange); color: var(--text); }
+    .btn-pill svg { width: 14px; height: 14px; }
+
+    /* ── City Tabs ── */
+    .city-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .city-bar::-webkit-scrollbar { display: none; }
+
+    .city-tab {
+      padding: 10px 16px;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+      user-select: none;
+    }
+    .city-tab:hover { color: var(--text); }
+    .city-tab.active {
+      color: var(--orange);
+      border-bottom-color: var(--orange);
+    }
+
+    .city-tab-add {
+      padding: 10px 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .city-tab-add:hover { color: var(--orange); }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      padding: 24px 20px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── Station grid ── */
+    .station-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+
+    .station-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.15s;
+      border-left: 4px solid var(--card-color, #555);
+      user-select: none;
+    }
+    .station-card:hover {
+      border-color: var(--card-color, #e8420a);
+      transform: translateY(-2px);
+    }
+    .station-card.playing {
+      background: var(--orange-dim);
+      border-color: var(--orange);
+      border-left-color: var(--orange);
+      box-shadow: 0 0 20px rgba(232,66,10,0.25);
+    }
+    .station-card.dragging {
+      opacity: 0.4;
+    }
+    .station-card.drag-over {
+      border-color: var(--orange);
+      background: var(--surface2);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .genre-badge {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: var(--surface2);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .station-card.playing .genre-badge {
+      background: rgba(232,66,10,0.2);
+      color: var(--orange);
+    }
+
+    .eq-bars {
+      display: none;
+      gap: 2px;
+      align-items: flex-end;
+      height: 18px;
+    }
+    .station-card.playing .eq-bars { display: flex; }
+    .eq-bars span {
+      width: 3px;
+      background: var(--orange);
+      border-radius: 2px;
+      animation: eqb 0.7s ease-in-out infinite alternate;
+    }
+    .eq-bars span:nth-child(2) { animation-delay: 0.2s; }
+    .eq-bars span:nth-child(3) { animation-delay: 0.4s; }
+    .eq-bars span:nth-child(4) { animation-delay: 0.1s; }
+    .eq-bars span:nth-child(5) { animation-delay: 0.35s; }
+
+    .card-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 1px;
+      color: var(--text);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .card-slogan {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      min-height: 16px;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .play-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: var(--surface3);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.15s;
+      flex-shrink: 0;
+    }
+    .play-btn:hover { background: var(--orange); transform: scale(1.1); }
+    .station-card.playing .play-btn { background: var(--orange); }
+    .play-btn svg { width: 14px; height: 14px; }
+
+    /* ── Search section ── */
+    .search-section { margin-bottom: 30px; }
+
+    .search-section h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 9px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--orange); }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    .search-btn {
+      padding: 9px 18px;
+      background: var(--orange);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .search-btn:hover { background: #c23508; }
+    .search-btn:disabled { background: var(--surface3); color: var(--text-muted); cursor: default; }
+
+    .search-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .result-info { min-width: 0; flex: 1; }
+    .result-name {
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .result-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .add-btn {
+      padding: 5px 12px;
+      background: transparent;
+      border: 1px solid var(--orange);
+      border-radius: 6px;
+      color: var(--orange);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
+    }
+    .add-btn:hover { background: var(--orange); color: #fff; }
+    .add-btn:disabled { border-color: var(--text-muted); color: var(--text-muted); cursor: default; }
+
+    /* ── Volume bar (fixed bottom) ── */
+    .volume-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      z-index: 200;
+    }
+
+    .vol-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      width: 56px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .vol-icon {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .vol-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .vol-btn:hover { border-color: var(--orange); background: var(--orange-dim); }
+
+    .vol-slider-wrap {
+      flex: 1;
+      position: relative;
+      height: 4px;
+      max-width: 400px;
+    }
+
+    input[type=range].vol-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, var(--orange) 0%, var(--orange) var(--vol-pct), var(--surface3) var(--vol-pct), var(--surface3) 100%);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range].vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--orange);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    input[type=range].vol-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+    .vol-number {
+      width: 38px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .vol-stop-btn {
+      padding: 6px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .vol-stop-btn:hover { border-color: #c0392b; color: #c0392b; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      width: 360px;
+      max-width: 90vw;
+    }
+    .modal h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .modal input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .modal input:focus { border-color: var(--orange); }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-btns button {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal-cancel { background: var(--surface2); color: var(--text-muted); }
+    .modal-save { background: var(--orange); color: #fff; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 300;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: var(--orange); }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state p { font-size: 15px; margin-top: 8px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .logo { font-size: 20px; }
+      .header-btns .btn-pill span { display: none; }
+      .vol-label { display: none; }
+      main { padding: 16px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">Nashville<span> Radio</span></div>
+
+  <div class="now-playing-ticker">
+    <div class="eq-mini" id="eqMini">
+      <span style="height:8px"></span>
+      <span style="height:12px"></span>
+      <span style="height:5px"></span>
+      <span style="height:10px"></span>
+    </div>
+    <div class="ticker-inner" id="tickerText">Nothing playing</div>
+  </div>
+
+  <div class="header-btns">
+    <a class="btn-pill" href="/mapper.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span>Deck</span>
+    </a>
+    <a class="btn-pill" href="http://192.168.2.89:32500" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+      <span>Plexamp</span>
+    </a>
+  </div>
+</header>
+
+<!-- City tabs -->
+<div class="city-bar" id="cityBar">
+  <div class="city-tab active" data-city="All">All</div>
+  <!-- populated by JS -->
+  <div class="city-tab-add" id="addCityBtn" title="Add city">+</div>
+</div>
+
+<!-- Main -->
+<main>
+  <!-- Station grid -->
+  <div class="station-grid" id="stationGrid"></div>
+
+  <!-- Search -->
+  <div class="search-section">
+    <h2>Find Stations</h2>
+    <div class="search-row">
+      <input class="search-input" id="searchInput" type="text" placeholder="Search station name…" />
+      <input class="search-input" id="searchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
+      <button class="search-btn" id="searchBtn">Search</button>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</main>
+
+<!-- Volume bar -->
+<div class="volume-bar">
+  <div class="vol-label">Volume</div>
+  <svg class="vol-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+  </svg>
+  <button class="vol-btn" id="volDown">−</button>
+  <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" style="--vol-pct:80%" />
+  <button class="vol-btn" id="volUp">+</button>
+  <span class="vol-number" id="volNumber">80</span>
+  <button class="vol-stop-btn" id="stopBtn">■ Stop</button>
+</div>
+
+<!-- Add city modal -->
+<div class="modal-overlay" id="cityModal">
+  <div class="modal">
+    <h3>Add City</h3>
+    <input type="text" id="cityInput" placeholder="e.g. Memphis" />
+    <div class="modal-btns">
+      <button class="modal-cancel" id="cityCancelBtn">Cancel</button>
+      <button class="modal-save" id="citySaveBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let stations = [];
+let cities = [];
+let currentStationId = null;
+let volume = 80;
+let activeCity = 'All';
+let dragSrcIndex = null;
+let volDebounce = null;
+
+// ── Toast ──
+function showToast(msg, success = true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (success ? ' success' : '');
+  setTimeout(() => { t.className = 'toast'; }, 2200);
+}
+
+// ── API helpers ──
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch('/api' + path, opts);
+  return r.json();
+}
+
+// ── Volume ──
+function updateVolSlider(v) {
+  volume = v;
+  const slider = document.getElementById('volSlider');
+  slider.value = v;
+  slider.style.setProperty('--vol-pct', v + '%');
+  document.getElementById('volNumber').textContent = v;
+}
+
+async function setVolume(v) {
+  v = Math.max(0, Math.min(100, v));
+  updateVolSlider(v);
+  clearTimeout(volDebounce);
+  volDebounce = setTimeout(async () => {
+    await api('POST', '/volume', { volume: v });
+  }, 80);
+}
+
+document.getElementById('volSlider').addEventListener('input', e => setVolume(+e.target.value));
+document.getElementById('volDown').addEventListener('click', () => setVolume(volume - 5));
+document.getElementById('volUp').addEventListener('click', () => setVolume(volume + 5));
+
+document.getElementById('stopBtn').addEventListener('click', async () => {
+  await api('POST', '/stop');
+  currentStationId = null;
+  updateTicker(null);
+  renderGrid();
+});
+
+// ── Ticker ──
+function updateTicker(station) {
+  const ticker = document.getElementById('tickerText');
+  const eq = document.getElementById('eqMini');
+  if (station) {
+    ticker.textContent = `${station.name}  —  ${station.slogan || station.genre}`;
+    ticker.className = 'ticker-inner active';
+    eq.className = 'eq-mini active';
+  } else {
+    ticker.textContent = 'Nothing playing';
+    ticker.className = 'ticker-inner';
+    eq.className = 'eq-mini';
+  }
+}
+
+// ── Play / Stop ──
+async function playStation(id) {
+  if (currentStationId === id) {
+    await api('POST', '/stop');
+    currentStationId = null;
+    updateTicker(null);
+  } else {
+    const res = await api('POST', '/play', { id });
+    if (res.ok) {
+      currentStationId = id;
+      updateTicker(res.station);
+    } else {
+      showToast('Could not play station', false);
+    }
+  }
+  renderGrid();
+}
+
+// ── City tabs ──
+function renderCityTabs() {
+  const bar = document.getElementById('cityBar');
+  // Remove old dynamic tabs
+  bar.querySelectorAll('.city-tab').forEach(t => t.remove());
+  const addBtn = document.getElementById('addCityBtn');
+
+  const allTab = document.createElement('div');
+  allTab.className = 'city-tab' + (activeCity === 'All' ? ' active' : '');
+  allTab.dataset.city = 'All';
+  allTab.textContent = 'All';
+  bar.insertBefore(allTab, addBtn);
+
+  cities.forEach(city => {
+    const tab = document.createElement('div');
+    tab.className = 'city-tab' + (activeCity === city ? ' active' : '');
+    tab.dataset.city = city;
+    tab.textContent = city;
+    bar.insertBefore(tab, addBtn);
+  });
+
+  bar.querySelectorAll('.city-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeCity = tab.dataset.city;
+      renderCityTabs();
+      renderGrid();
+    });
+  });
+}
+
+// ── Station grid ──
+function renderGrid() {
+  const grid = document.getElementById('stationGrid');
+  grid.innerHTML = '';
+
+  const filtered = activeCity === 'All'
+    ? stations
+    : stations.filter(s => s.city === activeCity);
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><p>No stations for this city.<br>Use search below to add some.</p></div>';
+    return;
+  }
+
+  filtered.forEach((station, i) => {
+    const card = document.createElement('div');
+    card.className = 'station-card' + (station.id === currentStationId ? ' playing' : '');
+    card.style.setProperty('--card-color', station.color || '#555');
+    card.draggable = true;
+    card.dataset.id = station.id;
+    card.dataset.index = stations.indexOf(station);
+
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="genre-badge">${station.genre || 'Radio'}</span>
+        <div class="eq-bars">
+          <span style="height:8px"></span>
+          <span style="height:14px"></span>
+          <span style="height:6px"></span>
+          <span style="height:11px"></span>
+          <span style="height:9px"></span>
+        </div>
+      </div>
+      <div class="card-name">${station.name}</div>
+      <div class="card-slogan">${station.slogan || ''}</div>
+      <div class="card-footer">
+        <button class="play-btn" title="${station.id === currentStationId ? 'Stop' : 'Play'}">
+          ${station.id === currentStationId
+            ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+            : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
+          }
+        </button>
+      </div>
+    `;
+
+    // Play button
+    card.querySelector('.play-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      playStation(station.id);
+    });
+    card.addEventListener('click', () => playStation(station.id));
+
+    // Drag and drop
+    card.addEventListener('dragstart', e => {
+      dragSrcIndex = +card.dataset.index;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', async e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const destIndex = +card.dataset.index;
+      if (dragSrcIndex !== null && dragSrcIndex !== destIndex) {
+        const moved = stations.splice(dragSrcIndex, 1)[0];
+        stations.splice(destIndex, 0, moved);
+        await api('POST', '/stations', stations);
+        renderGrid();
+      }
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// ── Add city modal ──
+document.getElementById('addCityBtn').addEventListener('click', () => {
+  document.getElementById('cityInput').value = '';
+  document.getElementById('cityModal').classList.add('open');
+  setTimeout(() => document.getElementById('cityInput').focus(), 50);
+});
+document.getElementById('cityCancelBtn').addEventListener('click', () => {
+  document.getElementById('cityModal').classList.remove('open');
+});
+document.getElementById('citySaveBtn').addEventListener('click', async () => {
+  const val = document.getElementById('cityInput').value.trim();
+  if (!val) return;
+  if (!cities.includes(val)) {
+    cities.push(val);
+    await api('POST', '/cities', cities);
+    renderCityTabs();
+    showToast(`Added city: ${val}`);
+  }
+  document.getElementById('cityModal').classList.remove('open');
+});
+document.getElementById('cityInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('citySaveBtn').click();
+  if (e.key === 'Escape') document.getElementById('cityCancelBtn').click();
+});
+
+// ── Search ──
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  const city = document.getElementById('searchCity').value.trim();
+  if (!q && !city) return;
+
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Searching…';
+  document.getElementById('searchResults').innerHTML = '';
+
+  try {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (city) params.set('city', city);
+    const results = await fetch('/api/search?' + params).then(r => r.json());
+
+    const container = document.getElementById('searchResults');
+    if (!Array.isArray(results) || results.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
+      return;
+    }
+
+    results.forEach(station => {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      const alreadySaved = stations.some(s => s.id === station.id || s.url === station.url);
+      card.innerHTML = `
+        <div class="result-info">
+          <div class="result-name">${station.name}</div>
+          <div class="result-meta">${[station.genre, station.city].filter(Boolean).join(' · ')}</div>
+        </div>
+        <button class="add-btn" ${alreadySaved ? 'disabled' : ''}>${alreadySaved ? 'Saved' : '+ Add'}</button>
+      `;
+      card.querySelector('.add-btn').addEventListener('click', async function() {
+        stations.push(station);
+        await api('POST', '/stations', stations);
+        this.textContent = 'Saved';
+        this.disabled = true;
+        renderGrid();
+        showToast(`Added ${station.name}`);
+      });
+      container.appendChild(card);
+    });
+  } catch(e) {
+    document.getElementById('searchResults').innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Search';
+  }
+}
+
+// ── Status polling ──
+async function pollStatus() {
+  try {
+    const s = await api('GET', '/status');
+    if (s.station) {
+      currentStationId = s.station.id;
+      updateTicker(s.station);
+    } else {
+      currentStationId = null;
+      updateTicker(null);
+    }
+    if (s.volume !== undefined && s.volume !== volume) {
+      updateVolSlider(s.volume);
+    }
+  } catch(e) { /* ignore */ }
+}
+
+// ── Init ──
+async function init() {
+  try {
+    [stations, cities] = await Promise.all([
+      api('GET', '/stations'),
+      api('GET', '/cities'),
+    ]);
+  } catch(e) {
+    showToast('Could not load stations', false);
+  }
+  renderCityTabs();
+  renderGrid();
+  await pollStatus();
+  setInterval(pollStatus, 3000);
+}
+
+init();
+</script>
+</body>
+</html>

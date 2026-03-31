@@ -1,0 +1,18 @@
+{
+  "keys": {
+    "0": {"type": "station", "id": "wsix"},
+    "1": {"type": "station", "id": "wkdf"},
+    "2": {"type": "station", "id": "wrvw"},
+    "3": {"type": "station", "id": "wlac"},
+    "4": {"type": "station", "id": "wbuz"},
+    "5": {"type": "station", "id": "wubt"},
+    "6": {"type": "station", "id": "wnfn"},
+    "7": {"type": "station", "id": "wnrq"}
+  },
+  "dials": {
+    "0": {"type": "volume"},
+    "1": {"type": "page"},
+    "2": {"type": "empty"},
+    "3": {"type": "stop"}
+  }
+}

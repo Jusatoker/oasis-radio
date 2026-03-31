@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  nashville-radio:
+    build: .
+    container_name: nashville-radio
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app/stations.json:/data/stations.json
+      - ./app/cities.json:/data/cities.json
+      - ./app/streamdeck_layout.json:/data/streamdeck_layout.json
+      - /run/user/1000/pulse/native:/run/user/1000/pulse/native
+    environment:
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+      - STATIONS_FILE=/data/stations.json
+      - CITIES_FILE=/data/cities.json
+      - LAYOUT_FILE=/data/streamdeck_layout.json

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "wsix",
+    "name": "WSIX 97.9",
+    "slogan": "The Hot Country",
+    "genre": "Country",
+    "city": "Nashville",
+    "url": "http://stream.revma.ihrhls.com/zc2157",
+    "color": "#e8420a"
+  },
+  {
+    "id": "wkdf",
+    "name": "WKDF 103.3",
+    "slogan": "Rock",
+    "genre": "Rock",
+    "city": "Nashville",
+    "url": "http://18153.live.streamtheworld.com/WKDFFMAAC_SC",
+    "color": "#c0392b"
+  },
+  {
+    "id": "wrvw",
+    "name": "WRVW 107.5",
+    "slogan": "Top 40",
+    "genre": "Top 40",
+    "city": "Nashville",
+    "url": "https://stream.revma.ihrhls.com/zc2784",
+    "color": "#8e44ad"
+  },
+  {
+    "id": "wlac",
+    "name": "WLAC 1510",
+    "slogan": "Talk Radio",
+    "genre": "Talk",
+    "city": "Nashville",
+    "url": "http://stream.revma.ihrhls.com/zc460",
+    "color": "#2c3e50"
+  },
+  {
+    "id": "wbuz",
+    "name": "WBUZ 102.9",
+    "slogan": "The Buzz",
+    "genre": "Alternative",
+    "city": "Nashville",
+    "url": "http://stream.revma.ihrhls.com/zc5765",
+    "color": "#27ae60"
+  },
+  {
+    "id": "wubt",
+    "name": "WUBT 101.1",
+    "slogan": "Tu 101",
+    "genre": "Regional",
+    "city": "Nashville",
+    "url": "http://stream.revma.ihrhls.com/zc2153/hls.m3u8",
+    "color": "#e67e22"
+  },
+  {
+    "id": "wnfn",
+    "name": "WNFN 95.9",
+    "slogan": "Nash FM",
+    "genre": "Country",
+    "city": "Nashville",
+    "url": "http://26383.live.streamtheworld.com:3690/WNFNFMAAC_SC",
+    "color": "#d35400"
+  },
+  {
+    "id": "wnrq",
+    "name": "WNRQ 105.9",
+    "slogan": "The Rock",
+    "genre": "Classic Rock",
+    "city": "Nashville",
+    "url": "http://stream.revma.ihrhls.com/zc2780",
+    "color": "#7f8c8d"
+  }
+]
