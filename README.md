@@ -1,4 +1,4 @@
-# Just Winging IT Homestead — Radio Dashboard
+# Oasis Radio
 
 Self-hosted web radio dashboard for the AcePC AK1 mini PC.
 Dark UI · drag-and-drop stations · Stream Deck+ integration · mpv backend.

@@ -1,5 +1,5 @@
 [Unit]
-Description=Just Winging IT Homestead Stream Deck Controller
+Description=Oasis Radio Stream Deck Controller
 After=network.target
 
 [Service]
