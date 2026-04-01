@@ -1215,19 +1215,72 @@ document.querySelectorAll('.search-tab-btn').forEach(btn => {
   });
 });
 
+// ── Play SXM station directly by URL (not in stations.json) ──
+async function playSxmStation(station) {
+  if (currentStationId === station.id) {
+    await api('POST', '/stop');
+    currentStationId = null;
+    updateTicker(null);
+  } else {
+    const res = await api('POST', '/play', {
+      id: station.id,
+      url: station.url,
+      name: station.name,
+      genre: station.genre,
+      color: station.color,
+      source: station.source,
+      slogan: station.slogan,
+      city: station.city,
+    });
+    if (res.ok) {
+      currentStationId = station.id;
+      updateTicker(res.station);
+      showToast(`▶ ${station.name}`);
+    } else {
+      showToast('Could not play station', false);
+    }
+  }
+}
+
 // ── Result card builder ──
 function buildResultCard(station, container) {
   const card = document.createElement('div');
   card.className = 'result-card' + (station.source === 'siriusxm' ? ' sxm-card' : '');
   const alreadySaved = stations.some(s => s.id === station.id || s.url === station.url);
   const isSxm = station.source === 'siriusxm';
+  const isPlaying = currentStationId === station.id;
   card.innerHTML = `
     <div class="result-info">
       <div class="result-name">${station.name}${isSxm ? ' <span class="sxm-badge">SXM</span>' : ''}</div>
       <div class="result-meta">${[station.genre, station.city].filter(Boolean).join(' · ')}</div>
     </div>
-    <button class="add-btn" ${alreadySaved ? 'disabled' : ''}>${alreadySaved ? 'Saved' : '+ Add'}</button>
+    <div style="display:flex;gap:6px;align-items:center">
+      ${isSxm ? `<button class="play-btn sxm-play-btn" title="${isPlaying ? 'Stop' : 'Play'}" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${isPlaying
+          ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+          : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
+        }
+      </button>` : ''}
+      <button class="add-btn" ${alreadySaved ? 'disabled' : ''}>${alreadySaved ? 'Saved' : '+ Add'}</button>
+    </div>
   `;
+  if (isSxm) {
+    card.querySelector('.sxm-play-btn').addEventListener('click', async function(e) {
+      e.stopPropagation();
+      await playSxmStation(station);
+      // Refresh all result cards in this container to update play state
+      container.querySelectorAll('.sxm-play-btn').forEach(btn => {
+        const cardEl = btn.closest('.result-card');
+        // update icon based on currentStationId
+      });
+      buildResultCard; // trigger re-render by rebuilding — simpler: just update the icon
+      const svg = currentStationId === station.id
+        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+        : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+      this.innerHTML = svg;
+      this.title = currentStationId === station.id ? 'Stop' : 'Play';
+    });
+  }
   card.querySelector('.add-btn').addEventListener('click', async function() {
     stations.push(station);
     await api('POST', '/stations', stations);

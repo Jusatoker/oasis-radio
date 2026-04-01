@@ -108,6 +108,9 @@ def _start_mpv(url: str):
 # SXM helpers
 # ---------------------------------------------------------------------------
 
+SXM_PROXY_LOG = '/tmp/sxm-proxy.log'
+
+
 def _stop_sxm_proxy():
     global _sxm_process
     if _sxm_process is not None:
@@ -125,16 +128,25 @@ def _stop_sxm_proxy():
 def _start_sxm_proxy(username: str, password: str):
     global _sxm_process
     _stop_sxm_proxy()
+    log_fh = open(SXM_PROXY_LOG, 'w')
     _sxm_process = subprocess.Popen(
-        ['python3', '-m', 'sxm.cli', username, password,
-         '--port', '9999', '--host', '0.0.0.0'],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        ['sxm', username, password, '--port', '9999', '--host', '0.0.0.0'],
+        stdout=log_fh,
+        stderr=log_fh,
     )
 
 
 def _sxm_is_logged_in() -> bool:
-    return os.path.exists(SXM_CREDS_FILE)
+    if not os.path.exists(SXM_CREDS_FILE):
+        return False
+    creds = _load_json(SXM_CREDS_FILE, {})
+    return bool(creds.get('username') and creds.get('password'))
+
+
+def _sxm_proxy_running() -> bool:
+    if _sxm_process is None:
+        return False
+    return _sxm_process.poll() is None
 
 
 def _autostart_sxm():
@@ -200,7 +212,7 @@ def _get_sxm_channels():
                 channels.append({
                     'id': ch_id,
                     'name': name,
-                    'url': f'http://localhost:9999/{ch_id}/playlist.m3u8',
+                    'url': f'http://localhost:9999/{ch_id}.m3u8',
                     'genre': genre,
                     'color': '#1a1a8c',
                     'source': 'siriusxm',
@@ -216,7 +228,7 @@ def _get_sxm_channels():
         {
             'id': ch['id'],
             'name': ch['name'],
-            'url': f"http://localhost:9999/{ch['id']}/playlist.m3u8",
+            'url': f"http://localhost:9999/{ch['id']}.m3u8",
             'genre': ch['genre'],
             'color': '#1a1a8c',
             'source': 'siriusxm',
@@ -284,6 +296,23 @@ def api_play():
     global _current_station
     data = request.get_json(force=True)
     station_id = data.get('id')
+
+    # Inline station (e.g. SiriusXM channels not stored in stations.json)
+    if data.get('url'):
+        station = {
+            'id': station_id or 'sxm-inline',
+            'name': data.get('name', 'SiriusXM'),
+            'url': data['url'],
+            'genre': data.get('genre', ''),
+            'color': data.get('color', '#1a1a8c'),
+            'source': data.get('source', 'siriusxm'),
+            'slogan': data.get('slogan', ''),
+            'city': data.get('city', 'SiriusXM'),
+        }
+        with _mpv_lock:
+            _current_station = station
+            _start_mpv(station['url'])
+        return jsonify({'ok': True, 'station': station})
 
     stations = _load_json(STATIONS_FILE, [])
     station = next((s for s in stations if s['id'] == station_id), None)
@@ -361,7 +390,22 @@ def api_sxm_status():
     if logged_in:
         creds = _load_json(SXM_CREDS_FILE, {})
         username = creds.get('username', '')
-    return jsonify({'logged_in': logged_in, 'username': username})
+    return jsonify({
+        'logged_in': logged_in,
+        'username': username,
+        'proxy_running': _sxm_proxy_running(),
+    })
+
+
+@app.route('/api/sxm/logs', methods=['GET'])
+def api_sxm_logs():
+    try:
+        with open(SXM_PROXY_LOG, 'r', errors='replace') as f:
+            lines = f.readlines()
+        # Return last 100 lines
+        return jsonify({'log': ''.join(lines[-100:]), 'running': _sxm_proxy_running()})
+    except FileNotFoundError:
+        return jsonify({'log': '(no log yet)', 'running': _sxm_proxy_running()})
 
 
 @app.route('/api/sxm/channels', methods=['GET'])

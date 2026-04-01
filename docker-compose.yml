@@ -11,6 +11,7 @@ services:
       - ./app/stations.json:/data/stations.json
       - ./app/cities.json:/data/cities.json
       - ./app/streamdeck_layout.json:/data/streamdeck_layout.json
+      - ./app/siriusxm.json:/data/siriusxm.json
       - /dev/snd:/dev/snd
     devices:
       - /dev/snd
