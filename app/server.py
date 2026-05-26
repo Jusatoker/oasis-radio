@@ -8,7 +8,8 @@ import threading
 import signal
 
 import requests
-from flask import Flask, request, jsonify, send_from_directory
+from markupsafe import escape
+from flask import Flask, request, jsonify, send_from_directory, make_response
 
 app = Flask(__name__, static_folder='static')
 
@@ -652,6 +653,141 @@ def api_search_radiogarden():
         return jsonify(_search_radiogarden(q=q, lat=lat, lng=lng))
     except Exception as exc:
         return jsonify({'error': str(exc)}), 502
+
+
+# ---------------------------------------------------------------------------
+# HTML partials (htmx)
+# ---------------------------------------------------------------------------
+
+def _render_result_card(station, saved_ids, saved_urls):
+    esc = escape
+    is_saved = station['id'] in saved_ids or station.get('url', '') in saved_urls
+    is_sxm = station.get('source') == 'siriusxm'
+    sxm_badge = f' <span class="sxm-badge">SXM</span>' if is_sxm else ''
+    sxm_class = ' sxm-card' if is_sxm else ''
+    meta = ' &middot; '.join(
+        esc(v) for v in [station.get('genre', ''), station.get('city', '')] if v
+    )
+    station_json = json.dumps(station).replace("'", "&#39;").replace('"', "&quot;")
+
+    sxm_play_btn = ''
+    if is_sxm:
+        sxm_play_btn = (
+            f'<button class="play-btn sxm-play-btn" title="Play"'
+            f' style="width:32px;height:32px;border-radius:50%;border:none;'
+            f'background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;'
+            f'align-items:center;justify-content:center;flex-shrink:0"'
+            f' onclick="playSxmStation({station_json})">'
+            f'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">'
+            f'<polygon points="5 3 19 12 5 21 5 3"/></svg></button>'
+        )
+
+    if is_saved:
+        add_btn = '<button class="add-btn" disabled>Saved</button>'
+    else:
+        add_btn = (
+            f'<button class="add-btn"'
+            f' hx-post="/api/stations/add" hx-swap="outerHTML"'
+            f' hx-vals=\'{json.dumps(station)}\'>'
+            f'+ Add</button>'
+        )
+
+    return (
+        f'<div class="result-card{sxm_class}">'
+        f'<div class="result-info">'
+        f'<div class="result-name">{esc(station["name"])}{sxm_badge}</div>'
+        f'<div class="result-meta">{meta}</div>'
+        f'</div>'
+        f'<div style="display:flex;gap:6px;align-items:center">'
+        f'{sxm_play_btn}{add_btn}'
+        f'</div></div>'
+    )
+
+
+def _render_results_html(stations_list):
+    saved = _load_json(STATIONS_FILE, [])
+    saved_ids = {s.get('id') for s in saved}
+    saved_urls = {s.get('url') for s in saved}
+    if not stations_list:
+        return '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>'
+    return ''.join(
+        _render_result_card(s, saved_ids, saved_urls) for s in stations_list
+    )
+
+
+def _render_error_html(msg):
+    esc_msg = escape(str(msg))
+    return f'<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: {esc_msg}</div>'
+
+
+@app.route('/api/stations/add', methods=['POST'])
+def api_add_station():
+    station = request.get_json(force=True)
+    if not isinstance(station, dict) or 'id' not in station:
+        return _render_error_html('Invalid station data'), 400
+    stations = _load_json(STATIONS_FILE, [])
+    if not any(s.get('id') == station['id'] for s in stations):
+        stations.append(station)
+        _save_json(STATIONS_FILE, stations)
+    resp = make_response('<button class="add-btn" disabled>Saved</button>')
+    resp.headers['HX-Trigger'] = 'stationAdded'
+    return resp
+
+
+@app.route('/partials/somafm', methods=['GET'])
+def partials_somafm():
+    q = request.args.get('q', '').strip()
+    try:
+        results = _search_somafm(q=q)
+        return _render_results_html(results)
+    except Exception as exc:
+        return _render_error_html(exc)
+
+
+@app.route('/partials/search', methods=['GET'])
+def partials_search():
+    q = request.args.get('q', '').strip()
+    city = request.args.get('city', '').strip()
+    source = request.args.get('source', '').strip().lower() or 'all'
+
+    try:
+        if source == 'radiobrowser':
+            results = _search_radiobrowser(q=q, city=city)
+        elif source == 'somafm':
+            results = _search_somafm(q=q)
+        elif source == 'radiogarden':
+            lat = request.args.get('lat', '').strip()
+            lng = request.args.get('lng', '').strip()
+            results = _search_radiogarden(q=q, lat=lat, lng=lng)
+        elif source == 'all':
+            combined = []
+            seen = set()
+
+            def _add(items):
+                for item in items:
+                    u = item.get('url', '')
+                    if u and u not in seen:
+                        seen.add(u)
+                        combined.append(item)
+
+            try:
+                _add(_search_radiobrowser(q=q, city=city))
+            except Exception:
+                pass
+            try:
+                _add(_search_somafm(q=q))
+            except Exception:
+                pass
+            try:
+                _add(_search_radiogarden(q=q))
+            except Exception:
+                pass
+            results = combined
+        else:
+            return _render_error_html(f'Unknown source: {source}')
+        return _render_results_html(results)
+    except Exception as exc:
+        return _render_error_html(exc)
 
 
 # ---------------------------------------------------------------------------

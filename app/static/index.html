@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -837,38 +838,47 @@
       <button class="search-tab-btn sxm-tab" data-pane="siriusxm">SiriusXM</button>
     </div>
 
-    <!-- All sources pane -->
+    <!-- All sources pane (htmx) -->
     <div class="search-pane active" id="pane-all">
-      <div class="search-row">
-        <input class="search-input" id="searchInput" type="text" placeholder="Search station name…" />
-        <input class="search-input" id="searchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
-        <button class="search-btn" id="searchBtn">Search</button>
-      </div>
+      <form class="search-row" hx-get="/partials/search" hx-target="#searchResults" hx-swap="innerHTML"
+            hx-indicator="#searchResults">
+        <input type="hidden" name="source" value="all" />
+        <input class="search-input" name="q" id="searchInput" type="text" placeholder="Search station name…" />
+        <input class="search-input" name="city" id="searchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
+        <button class="search-btn" type="submit" id="searchBtn">Search</button>
+      </form>
       <div class="search-results" id="searchResults"></div>
     </div>
 
-    <!-- Radio Browser pane -->
+    <!-- Radio Browser pane (htmx) -->
     <div class="search-pane" id="pane-radiobrowser">
-      <div class="search-row">
-        <input class="search-input" id="rbSearchInput" type="text" placeholder="Search station name…" />
-        <input class="search-input" id="rbSearchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
-        <button class="search-btn" id="rbSearchBtn">Search</button>
-      </div>
+      <form class="search-row" hx-get="/partials/search" hx-target="#rbSearchResults" hx-swap="innerHTML">
+        <input type="hidden" name="source" value="radiobrowser" />
+        <input class="search-input" name="q" id="rbSearchInput" type="text" placeholder="Search station name…" />
+        <input class="search-input" name="city" id="rbSearchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
+        <button class="search-btn" type="submit" id="rbSearchBtn">Search</button>
+      </form>
       <div class="search-results" id="rbSearchResults"></div>
     </div>
 
-    <!-- SomaFM pane -->
+    <!-- SomaFM pane (htmx) -->
     <div class="search-pane" id="pane-somafm">
       <div style="margin-bottom:10px;font-size:13px;color:var(--text-muted)">Curated internet radio channels from SomaFM</div>
-      <div class="search-results" id="somaResults"></div>
+      <div class="search-results" id="somaResults"
+           hx-get="/partials/somafm"
+           hx-trigger="intersect once"
+           hx-indicator="#somaSpinner">
+        <div id="somaSpinner" style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">Loading SomaFM channels…</div>
+      </div>
     </div>
 
-    <!-- Radio Garden pane -->
+    <!-- Radio Garden pane (htmx) -->
     <div class="search-pane" id="pane-radiogarden">
-      <div class="search-row">
-        <input class="search-input" id="rgSearchInput" type="text" placeholder="Search Radio Garden…" />
-        <button class="search-btn" id="rgSearchBtn">Search</button>
-      </div>
+      <form class="search-row" hx-get="/partials/search" hx-target="#rgSearchResults" hx-swap="innerHTML">
+        <input type="hidden" name="source" value="radiogarden" />
+        <input class="search-input" name="q" id="rgSearchInput" type="text" placeholder="Search Radio Garden…" />
+        <button class="search-btn" type="submit" id="rgSearchBtn">Search</button>
+      </form>
       <div class="search-results" id="rgSearchResults"></div>
     </div>
 
@@ -940,7 +950,6 @@ let activeCity = 'All';
 let dragSrcIndex = null;
 let volDebounce = null;
 let activeSearchPane = 'all';
-let somaLoaded = false;
 let sxmLoggedIn = false;
 let sxmUsername = '';
 let sxmChannelsLoaded = false;
@@ -1224,10 +1233,6 @@ document.querySelectorAll('.search-tab-btn').forEach(btn => {
     document.getElementById('pane-' + pane).classList.add('active');
     activeSearchPane = pane;
 
-    // Auto-load SomaFM on first open
-    if (pane === 'somafm' && !somaLoaded) {
-      loadSomaFM();
-    }
     // Load SXM channels if already logged in
     if (pane === 'siriusxm') {
       refreshSxmPane();
@@ -1330,140 +1335,12 @@ function buildResultCard(station, container) {
   container.appendChild(card);
 }
 
-// ── All-source search ──
-document.getElementById('searchBtn').addEventListener('click', doSearch);
-document.getElementById('searchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doSearch();
+// ── htmx: refresh station grid when a station is added via htmx ──
+document.body.addEventListener('stationAdded', async () => {
+  stations = await api('GET', '/stations');
+  renderGrid();
+  showToast('Station added');
 });
-
-async function doSearch() {
-  const q = document.getElementById('searchInput').value.trim();
-  const city = document.getElementById('searchCity').value.trim();
-  if (!q && !city) return;
-
-  const btn = document.getElementById('searchBtn');
-  btn.disabled = true;
-  btn.textContent = 'Searching…';
-  const container = document.getElementById('searchResults');
-  container.innerHTML = '';
-
-  try {
-    const params = new URLSearchParams({ source: 'all' });
-    if (q) params.set('q', q);
-    if (city) params.set('city', city);
-    const results = await fetch('/api/search?' + params).then(r => r.json());
-
-    if (results && results.error) {
-      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
-      return;
-    }
-    if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
-      return;
-    }
-    results.forEach(s => buildResultCard(s, container));
-  } catch(e) {
-    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Search';
-  }
-}
-
-// ── Radio Browser pane search ──
-document.getElementById('rbSearchBtn').addEventListener('click', doRbSearch);
-document.getElementById('rbSearchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doRbSearch();
-});
-
-async function doRbSearch() {
-  const q = document.getElementById('rbSearchInput').value.trim();
-  const city = document.getElementById('rbSearchCity').value.trim();
-  if (!q && !city) return;
-
-  const btn = document.getElementById('rbSearchBtn');
-  btn.disabled = true;
-  btn.textContent = 'Searching…';
-  const container = document.getElementById('rbSearchResults');
-  container.innerHTML = '';
-
-  try {
-    const params = new URLSearchParams({ source: 'radiobrowser' });
-    if (q) params.set('q', q);
-    if (city) params.set('city', city);
-    const results = await fetch('/api/search?' + params).then(r => r.json());
-
-    if (results && results.error) {
-      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
-      return;
-    }
-    if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
-      return;
-    }
-    results.forEach(s => buildResultCard(s, container));
-  } catch(e) {
-    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Search';
-  }
-}
-
-// ── SomaFM pane ──
-async function loadSomaFM() {
-  somaLoaded = true;
-  const container = document.getElementById('somaResults');
-  container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">Loading SomaFM channels…</div>';
-  try {
-    const results = await fetch('/api/search/somafm').then(r => r.json());
-    container.innerHTML = '';
-    if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No SomaFM channels found.</div>';
-      return;
-    }
-    results.forEach(s => buildResultCard(s, container));
-  } catch(e) {
-    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Failed to load SomaFM. Check your connection.</div>';
-  }
-}
-
-// ── Radio Garden pane ──
-document.getElementById('rgSearchBtn').addEventListener('click', doRgSearch);
-document.getElementById('rgSearchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doRgSearch();
-});
-
-async function doRgSearch() {
-  const q = document.getElementById('rgSearchInput').value.trim();
-  if (!q) return;
-
-  const btn = document.getElementById('rgSearchBtn');
-  btn.disabled = true;
-  btn.textContent = 'Searching…';
-  const container = document.getElementById('rgSearchResults');
-  container.innerHTML = '';
-
-  try {
-    const params = new URLSearchParams({ q });
-    const results = await fetch('/api/search/radiogarden?' + params).then(r => r.json());
-
-    if (results && results.error) {
-      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
-      return;
-    }
-    if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
-      return;
-    }
-    results.forEach(s => buildResultCard(s, container));
-  } catch(e) {
-    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Search failed. Check your connection.</div>';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Search';
-  }
-}
 
 // ── SiriusXM pane ──
 async function refreshSxmPane() {
