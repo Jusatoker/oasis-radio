@@ -345,9 +345,19 @@ def main():
     _load_layout()
 
     print("[startup] Looking for Stream Deck+…")
-    devices = DeviceManager().enumerate()
+    max_retries = int(os.environ.get("DECK_RETRIES", "10"))
+    retry_delay = int(os.environ.get("DECK_RETRY_DELAY", "5"))
+    devices = []
+    for attempt in range(1, max_retries + 1):
+        devices = DeviceManager().enumerate()
+        if devices:
+            break
+        print(f"[startup] No Stream Deck found (attempt {attempt}/{max_retries}), "
+              f"retrying in {retry_delay}s…", file=sys.stderr)
+        time.sleep(retry_delay)
     if not devices:
-        print("ERROR: No Stream Deck found. Check USB connection and udev rules.", file=sys.stderr)
+        print("ERROR: No Stream Deck found after retries. "
+              "Check USB connection, VirtualHere, and udev rules.", file=sys.stderr)
         sys.exit(1)
 
     _deck = devices[0]

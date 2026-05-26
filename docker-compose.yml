@@ -12,13 +12,12 @@ services:
       - ./app/cities.json:/data/cities.json
       - ./app/streamdeck_layout.json:/data/streamdeck_layout.json
       - ./app/siriusxm.json:/data/siriusxm.json
-      - /dev/snd:/dev/snd
-    devices:
-      - /dev/snd
-    group_add:
-      - audio
+      # PulseAudio socket — host PA handles the USB audio device
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie:ro
     environment:
-      - ALSA_CARD=0
+      - AUDIO_OUTPUT=pulse
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
       - STATIONS_FILE=/data/stations.json
       - CITIES_FILE=/data/cities.json
       - LAYOUT_FILE=/data/streamdeck_layout.json

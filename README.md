@@ -1,14 +1,36 @@
 # Oasis Radio
 
-Self-hosted web radio dashboard for the AcePC AK1 mini PC.
-Dark UI · drag-and-drop stations · Stream Deck+ integration · mpv backend.
+Self-hosted web radio dashboard with Stream Deck+ integration and mpv backend.
+Dark UI · drag-and-drop stations · multi-source search · htmx-powered.
+
+## Architecture
+
+```
+┌─────────────────────┐          Ethernet          ┌──────────────────┐
+│     AcePC AK1       │◄──────────────────────────►│   GL-Net Mango   │
+│                     │       VirtualHere USB/IP    │  (reflashed)     │
+│  Docker (Flask+mpv) │                             │                  │
+│  Stream Deck ctrl   │                             │  ┌────────────┐  │
+│  Chromium kiosk     │                             │  │ AudioBox   │  │
+│  PulseAudio         │                             │  │ USB 96     │  │
+│                     │                             │  ├────────────┤  │
+│  HDMI out ──► TV    │                             │  │ Stream     │  │
+│  (Notion dashboard) │                             │  │ Deck+      │  │
+└─────────────────────┘                             │  └────────────┘  │
+                                                    └──────────────────┘
+```
+
+- **AcePC AK1** — Runs Docker (Oasis Radio), PulseAudio, Stream Deck controller, and a Chromium kiosk displaying a Notion farm dashboard
+- **GL-Net Mango** — Reflashed with VirtualHere server; AudioBox USB 96 and Stream Deck+ plug into its USB ports and route over Ethernet to the AcePC
 
 ## Prerequisites
 
 - AcePC AK1 (or any headless Linux box) running Debian/Ubuntu
-- PreSonus AudioBox USB 96 (or any ALSA/PulseAudio sink)
-- Elgato Stream Deck+ connected via USB *(optional)*
-- Docker + docker-compose installed *(setup.sh handles this)*
+- GL-Net Mango reflashed with VirtualHere USB server
+- PreSonus AudioBox USB 96 (plugged into Mango)
+- Elgato Stream Deck+ (plugged into Mango)
+- Docker + docker-compose *(setup.sh handles this)*
+- Monitor on HDMI *(optional, for farm dashboard kiosk)*
 
 ---
 
@@ -20,7 +42,29 @@ cd oasis-radio
 bash setup/setup.sh
 ```
 
-Open the dashboard at **http://<your-ip>:5000**
+The setup script will:
+1. Install system packages (Docker, PulseAudio, Chromium, Openbox)
+2. Download and install VirtualHere USB client
+3. Configure PulseAudio for Docker audio passthrough
+4. Set up the Stream Deck controller with retry logic for VirtualHere
+5. Optionally configure a Chromium kiosk for a Notion farm dashboard
+6. Start the Docker stack
+
+### Post-install: attach USB devices
+
+```bash
+# List devices available on the Mango
+vhclientx86_64 -t 'LIST'
+
+# Auto-attach each device (persists across reboots)
+vhclientx86_64 -t 'AUTO USE DEVICE,<hub>.<device>'
+
+# Set AudioBox as default PulseAudio sink
+pactl list short sinks
+pactl set-default-sink <audiobox-sink-name>
+```
+
+Open the dashboard at **http://\<acepc-ip\>:5000**
 
 ---
 
@@ -31,29 +75,6 @@ Open the dashboard at **http://<your-ip>:5000**
 3. Click **+ Add** on any result — it saves to `stations.json` immediately
 4. Drag cards to reorder
 
-To add a station manually, edit `app/stations.json`:
-
-```json
-{
-  "id": "unique-slug",
-  "name": "WXYZ 99.9",
-  "slogan": "Your slogan",
-  "genre": "Country",
-  "city": "Nashville",
-  "url": "http://stream.example.com/stream",
-  "color": "#e8420a"
-}
-```
-
-Then `docker-compose restart` (not required — the API serves the file live).
-
----
-
-## Adding Cities
-
-Click the **+** tab next to the city tabs, type the city name, press **Add**.
-Cities are saved to `app/cities.json`.
-
 ---
 
 ## Stream Deck Mapper
@@ -61,13 +82,7 @@ Cities are saved to `app/cities.json`.
 1. Click **Deck** in the header (or go to `/mapper.html`)
 2. Drag stations from the left panel onto the 8 LCD key slots
 3. Drag controls (Volume, Stop, Page Flip) onto the 4 dial slots
-4. Click **Save Layout** — the controller reloads automatically on next restart
-
-To reload the layout without restarting the service:
-
-```bash
-kill -HUP $(systemctl --user show -p MainPID oasis-radio | cut -d= -f2)
-```
+4. Click **Save Layout**
 
 ---
 
@@ -77,13 +92,21 @@ kill -HUP $(systemctl --user show -p MainPID oasis-radio | cut -d= -f2)
 # Docker (Flask + mpv)
 docker-compose logs -f
 docker-compose restart
-docker-compose down && docker-compose up -d
 
 # Stream Deck controller
 systemctl --user status  oasis-radio
 systemctl --user restart oasis-radio
-systemctl --user stop    oasis-radio
-journalctl --user -u oasis-radio -f
+
+# VirtualHere client
+systemctl --user status  virtualhere-client
+systemctl --user restart virtualhere-client
+
+# Farm dashboard kiosk
+systemctl --user status  farm-kiosk
+systemctl --user restart farm-kiosk
+
+# Reload Stream Deck layout without restart
+kill -HUP $(systemctl --user show -p MainPID oasis-radio | cut -d= -f2)
 ```
 
 ---
@@ -92,21 +115,23 @@ journalctl --user -u oasis-radio -f
 
 ```
 oasis-radio/
-├── docker-compose.yml          # Flask container definition
-├── Dockerfile                  # Python + mpv image
+├── docker-compose.yml              # Flask container + PulseAudio
+├── Dockerfile                      # Python + mpv + PulseAudio
 ├── app/
-│   ├── server.py               # Flask API + mpv IPC
-│   ├── requirements.txt        # Python dependencies
-│   ├── stations.json           # Station list (editable)
-│   ├── cities.json             # City tabs (editable)
-│   ├── streamdeck_layout.json  # Deck layout (editable)
+│   ├── server.py                   # Flask API + mpv IPC + htmx partials
+│   ├── requirements.txt            # Python dependencies
+│   ├── stations.json               # Station list (editable)
+│   ├── cities.json                 # City tabs (editable)
+│   ├── streamdeck_layout.json      # Deck layout (editable)
 │   └── static/
-│       ├── index.html          # Main dashboard
-│       └── mapper.html         # Stream Deck mapper
+│       ├── index.html              # Main dashboard (htmx + vanilla JS)
+│       └── mapper.html             # Stream Deck mapper
 ├── streamdeck/
-│   └── controller.py           # Stream Deck+ controller (runs outside Docker)
+│   └── controller.py               # Stream Deck+ controller (VH retry)
 └── setup/
-    ├── setup.sh                # One-command installer
-    ├── 99-streamdeck.rules     # udev rules for HID access
-    └── oasis-radio.service     # systemd user service unit
+    ├── setup.sh                    # One-command installer
+    ├── 99-streamdeck.rules         # udev rules for HID access
+    ├── oasis-radio.service         # Stream Deck systemd service
+    ├── virtualhere-client.service  # VirtualHere USB client service
+    └── farm-kiosk.service          # Chromium kiosk for Notion
 ```

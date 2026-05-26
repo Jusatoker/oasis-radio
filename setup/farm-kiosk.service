@@ -1,0 +1,26 @@
+[Unit]
+Description=Homestead Farm Dashboard (Chromium Kiosk)
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/chromium-browser \
+    --kiosk \
+    --noerrdialogs \
+    --disable-infobars \
+    --disable-session-crashed-bubble \
+    --disable-restore-session-state \
+    --disable-features=TranslateUI \
+    --check-for-update-interval=31536000 \
+    --no-first-run \
+    --start-fullscreen \
+    --autoplay-policy=no-user-gesture-required \
+    %NOTION_URL%
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
