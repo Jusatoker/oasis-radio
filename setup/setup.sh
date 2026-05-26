@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Nashville Radio — One-command setup
-# Run as user 'ricky' on the AcePC AK1 (IP: 192.168.2.89)
+# Oasis Radio — One-command setup
+# Run as user 'ricky' on the AcePC AK1
 # Usage: bash setup/setup.sh
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-INSTALL_DIR="/opt/nashville-radio"
-SERVICE_NAME="iheart-radio"
+INSTALL_DIR="/opt/oasis-radio"
+SERVICE_NAME="oasis-radio"
 USER="${USER:-ricky}"
 
 info()  { echo -e "\033[1;34m[setup]\033[0m $*"; }
@@ -91,9 +91,9 @@ info "Installing Stream Deck controller as systemd user service…"
 mkdir -p ~/.config/systemd/user
 # Patch ExecStart to use the venv python and correct install dir
 sed \
-    -e "s|/opt/nashville-radio|$INSTALL_DIR|g" \
+    -e "s|/opt/oasis-radio|$INSTALL_DIR|g" \
     -e "s|/usr/bin/python3|$HOME/.venv/streamdeck/bin/python3|g" \
-    "$INSTALL_DIR/setup/iheart-radio.service" \
+    "$INSTALL_DIR/setup/oasis-radio.service" \
     > ~/.config/systemd/user/"$SERVICE_NAME".service
 
 systemctl --user daemon-reload
@@ -111,10 +111,10 @@ ok "Docker stack started."
 # ── 9. Final status ───────────────────────────────────────────────────────────
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-ok "Nashville Radio is up!"
+ok "Oasis Radio is up!"
 echo ""
 echo "  Dashboard:    http://192.168.2.89:5000"
-echo "  Stream Deck:  $(systemctl --user is-active "$SERVICE_NAME" 2>/dev/null || echo 'check: systemctl --user status iheart-radio')"
+echo "  Stream Deck:  $(systemctl --user is-active "$SERVICE_NAME" 2>/dev/null || echo 'check: systemctl --user status oasis-radio')"
 echo "  Docker:       $(docker-compose -f "$INSTALL_DIR/docker-compose.yml" ps --services 2>/dev/null | tr '\n' ' ')"
 echo ""
 echo "  Useful commands:"

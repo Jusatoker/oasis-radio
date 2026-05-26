@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  nashville-radio:
+  oasis-radio:
     build: .
     container_name: oasis-radio
     restart: unless-stopped

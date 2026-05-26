@@ -1,0 +1,22 @@
+# Credentials
+app/siriusxm.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Data files (runtime state, not source)
+# Uncomment these if you don't want to track station data:
+# app/stations.json
+# app/cities.json
+# app/streamdeck_layout.json

@@ -6,7 +6,7 @@ Dark UI · drag-and-drop stations · Stream Deck+ integration · mpv backend.
 ## Prerequisites
 
 - AcePC AK1 (or any headless Linux box) running Debian/Ubuntu
-- PreSonus AudioBox USB 96 (or any PulseAudio sink)
+- PreSonus AudioBox USB 96 (or any ALSA/PulseAudio sink)
 - Elgato Stream Deck+ connected via USB *(optional)*
 - Docker + docker-compose installed *(setup.sh handles this)*
 
@@ -15,12 +15,12 @@ Dark UI · drag-and-drop stations · Stream Deck+ integration · mpv backend.
 ## Install (one command)
 
 ```bash
-git clone https://github.com/jusatoker/nashville-radio
-cd nashville-radio
+git clone https://github.com/justoker/oasis-radio
+cd oasis-radio
 bash setup/setup.sh
 ```
 
-Open the dashboard at **http://192.168.2.89:5000**
+Open the dashboard at **http://<your-ip>:5000**
 
 ---
 
@@ -66,7 +66,7 @@ Cities are saved to `app/cities.json`.
 To reload the layout without restarting the service:
 
 ```bash
-kill -HUP $(systemctl --user show -p MainPID iheart-radio | cut -d= -f2)
+kill -HUP $(systemctl --user show -p MainPID oasis-radio | cut -d= -f2)
 ```
 
 ---
@@ -80,10 +80,10 @@ docker-compose restart
 docker-compose down && docker-compose up -d
 
 # Stream Deck controller
-systemctl --user status  iheart-radio
-systemctl --user restart iheart-radio
-systemctl --user stop    iheart-radio
-journalctl --user -u iheart-radio -f
+systemctl --user status  oasis-radio
+systemctl --user restart oasis-radio
+systemctl --user stop    oasis-radio
+journalctl --user -u oasis-radio -f
 ```
 
 ---
@@ -91,11 +91,12 @@ journalctl --user -u iheart-radio -f
 ## Project Structure
 
 ```
-nashville-radio/
+oasis-radio/
 ├── docker-compose.yml          # Flask container definition
 ├── Dockerfile                  # Python + mpv image
 ├── app/
 │   ├── server.py               # Flask API + mpv IPC
+│   ├── requirements.txt        # Python dependencies
 │   ├── stations.json           # Station list (editable)
 │   ├── cities.json             # City tabs (editable)
 │   ├── streamdeck_layout.json  # Deck layout (editable)
@@ -107,5 +108,5 @@ nashville-radio/
 └── setup/
     ├── setup.sh                # One-command installer
     ├── 99-streamdeck.rules     # udev rules for HID access
-    └── iheart-radio.service    # systemd user service unit
+    └── oasis-radio.service     # systemd user service unit
 ```

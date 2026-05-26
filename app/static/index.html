@@ -1093,43 +1093,63 @@ function renderGrid() {
 
   const pageStations = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  pageStations.forEach((station) => {
+  const pageOffset = (currentPage - 1) * PAGE_SIZE;
+  pageStations.forEach((station, pageIdx) => {
+    const absIndex = activeCity === 'All'
+      ? pageOffset + pageIdx
+      : stations.indexOf(station);
     const card = document.createElement('div');
     card.className = 'station-card' + (station.id === currentStationId ? ' playing' : '');
     card.style.setProperty('--card-color', station.color || '#555');
     card.draggable = true;
     card.dataset.id = station.id;
-    card.dataset.index = stations.indexOf(station);
+    card.dataset.index = absIndex;
 
     const isSxm = station.source === 'siriusxm';
 
-    card.innerHTML = `
-      <div class="card-top">
-        <div class="card-top-left">
-          <span class="genre-badge">${station.genre || 'Radio'}</span>
-          ${isSxm ? '<span class="sxm-badge">SXM</span>' : ''}
-        </div>
-        <div class="eq-bars">
-          <span style="height:8px"></span>
-          <span style="height:14px"></span>
-          <span style="height:6px"></span>
-          <span style="height:11px"></span>
-          <span style="height:9px"></span>
-        </div>
-      </div>
-      <div class="card-name">${station.name}</div>
-      <div class="card-slogan">${station.slogan || ''}</div>
-      <div class="card-footer">
-        <button class="play-btn" title="${station.id === currentStationId ? 'Stop' : 'Play'}">
-          ${station.id === currentStationId
-            ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-            : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
-          }
-        </button>
-      </div>
-    `;
+    const cardTop = document.createElement('div');
+    cardTop.className = 'card-top';
+    const cardTopLeft = document.createElement('div');
+    cardTopLeft.className = 'card-top-left';
+    const genreBadge = document.createElement('span');
+    genreBadge.className = 'genre-badge';
+    genreBadge.textContent = station.genre || 'Radio';
+    cardTopLeft.appendChild(genreBadge);
+    if (isSxm) {
+      const sxmBadge = document.createElement('span');
+      sxmBadge.className = 'sxm-badge';
+      sxmBadge.textContent = 'SXM';
+      cardTopLeft.appendChild(sxmBadge);
+    }
+    cardTop.appendChild(cardTopLeft);
+    cardTop.innerHTML += `<div class="eq-bars">
+      <span style="height:8px"></span><span style="height:14px"></span>
+      <span style="height:6px"></span><span style="height:11px"></span>
+      <span style="height:9px"></span></div>`;
+    card.appendChild(cardTop);
 
-    card.querySelector('.play-btn').addEventListener('click', e => {
+    const cardName = document.createElement('div');
+    cardName.className = 'card-name';
+    cardName.textContent = station.name;
+    card.appendChild(cardName);
+
+    const cardSlogan = document.createElement('div');
+    cardSlogan.className = 'card-slogan';
+    cardSlogan.textContent = station.slogan || '';
+    card.appendChild(cardSlogan);
+
+    const cardFooter = document.createElement('div');
+    cardFooter.className = 'card-footer';
+    const playBtn = document.createElement('button');
+    playBtn.className = 'play-btn';
+    playBtn.title = station.id === currentStationId ? 'Stop' : 'Play';
+    playBtn.innerHTML = station.id === currentStationId
+      ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+    cardFooter.appendChild(playBtn);
+    card.appendChild(cardFooter);
+
+    playBtn.addEventListener('click', e => {
       e.stopPropagation();
       playStation(station.id);
     });
@@ -1249,39 +1269,55 @@ function buildResultCard(station, container) {
   const alreadySaved = stations.some(s => s.id === station.id || s.url === station.url);
   const isSxm = station.source === 'siriusxm';
   const isPlaying = currentStationId === station.id;
-  card.innerHTML = `
-    <div class="result-info">
-      <div class="result-name">${station.name}${isSxm ? ' <span class="sxm-badge">SXM</span>' : ''}</div>
-      <div class="result-meta">${[station.genre, station.city].filter(Boolean).join(' · ')}</div>
-    </div>
-    <div style="display:flex;gap:6px;align-items:center">
-      ${isSxm ? `<button class="play-btn sxm-play-btn" title="${isPlaying ? 'Stop' : 'Play'}" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        ${isPlaying
-          ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-          : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
-        }
-      </button>` : ''}
-      <button class="add-btn" ${alreadySaved ? 'disabled' : ''}>${alreadySaved ? 'Saved' : '+ Add'}</button>
-    </div>
-  `;
+
+  const info = document.createElement('div');
+  info.className = 'result-info';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'result-name';
+  nameEl.textContent = station.name;
   if (isSxm) {
-    card.querySelector('.sxm-play-btn').addEventListener('click', async function(e) {
+    const badge = document.createElement('span');
+    badge.className = 'sxm-badge';
+    badge.textContent = 'SXM';
+    badge.style.marginLeft = '6px';
+    nameEl.appendChild(document.createTextNode(' '));
+    nameEl.appendChild(badge);
+  }
+  const metaEl = document.createElement('div');
+  metaEl.className = 'result-meta';
+  metaEl.textContent = [station.genre, station.city].filter(Boolean).join(' · ');
+  info.appendChild(nameEl);
+  info.appendChild(metaEl);
+  card.appendChild(info);
+
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;gap:6px;align-items:center';
+
+  if (isSxm) {
+    const sxmPlayBtn = document.createElement('button');
+    sxmPlayBtn.className = 'play-btn sxm-play-btn';
+    sxmPlayBtn.title = isPlaying ? 'Stop' : 'Play';
+    sxmPlayBtn.style.cssText = 'width:32px;height:32px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+    sxmPlayBtn.innerHTML = isPlaying
+      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+      : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+    sxmPlayBtn.addEventListener('click', async function(e) {
       e.stopPropagation();
       await playSxmStation(station);
-      // Refresh all result cards in this container to update play state
-      container.querySelectorAll('.sxm-play-btn').forEach(btn => {
-        const cardEl = btn.closest('.result-card');
-        // update icon based on currentStationId
-      });
-      buildResultCard; // trigger re-render by rebuilding — simpler: just update the icon
       const svg = currentStationId === station.id
         ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
         : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
       this.innerHTML = svg;
       this.title = currentStationId === station.id ? 'Stop' : 'Play';
     });
+    actions.appendChild(sxmPlayBtn);
   }
-  card.querySelector('.add-btn').addEventListener('click', async function() {
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-btn';
+  addBtn.textContent = alreadySaved ? 'Saved' : '+ Add';
+  addBtn.disabled = alreadySaved;
+  addBtn.addEventListener('click', async function() {
     stations.push(station);
     await api('POST', '/stations', stations);
     this.textContent = 'Saved';
@@ -1289,6 +1325,8 @@ function buildResultCard(station, container) {
     renderGrid();
     showToast(`Added ${station.name}`);
   });
+  actions.appendChild(addBtn);
+  card.appendChild(actions);
   container.appendChild(card);
 }
 
@@ -1315,6 +1353,10 @@ async function doSearch() {
     if (city) params.set('city', city);
     const results = await fetch('/api/search?' + params).then(r => r.json());
 
+    if (results && results.error) {
+      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
+      return;
+    }
     if (!Array.isArray(results) || results.length === 0) {
       container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
       return;
@@ -1351,6 +1393,10 @@ async function doRbSearch() {
     if (city) params.set('city', city);
     const results = await fetch('/api/search?' + params).then(r => r.json());
 
+    if (results && results.error) {
+      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
+      return;
+    }
     if (!Array.isArray(results) || results.length === 0) {
       container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
       return;
@@ -1402,6 +1448,10 @@ async function doRgSearch() {
     const params = new URLSearchParams({ q });
     const results = await fetch('/api/search/radiogarden?' + params).then(r => r.json());
 
+    if (results && results.error) {
+      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
+      return;
+    }
     if (!Array.isArray(results) || results.length === 0) {
       container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>';
       return;

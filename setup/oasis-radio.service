@@ -1,0 +1,13 @@
+[Unit]
+Description=Oasis Radio Stream Deck Controller
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/oasis-radio/streamdeck/controller.py
+Restart=on-failure
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

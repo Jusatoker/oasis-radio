@@ -2,6 +2,7 @@ import os
 import json
 import subprocess
 import socket
+import tempfile
 import time
 import threading
 import signal
@@ -22,8 +23,8 @@ _current_volume = 80
 _mpv_process = None
 _mpv_lock = threading.Lock()
 
-_sxm_client = None
 _sxm_process = None
+_sxm_log_fh = None
 
 try:
     from sxm.client import SXMClient
@@ -45,8 +46,15 @@ def _load_json(path, default):
 
 
 def _save_json(path, data):
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2)
+    dir_name = os.path.dirname(path) or '.'
+    fd, tmp = tempfile.mkstemp(dir=dir_name, suffix='.tmp')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp, path)
+    except BaseException:
+        os.unlink(tmp)
+        raise
 
 
 def _send_mpv_command(cmd: dict) -> bool:
@@ -112,7 +120,7 @@ SXM_PROXY_LOG = '/tmp/sxm-proxy.log'
 
 
 def _stop_sxm_proxy():
-    global _sxm_process
+    global _sxm_process, _sxm_log_fh
     if _sxm_process is not None:
         try:
             _sxm_process.terminate()
@@ -123,16 +131,22 @@ def _stop_sxm_proxy():
             except Exception:
                 pass
         _sxm_process = None
+    if _sxm_log_fh is not None:
+        try:
+            _sxm_log_fh.close()
+        except Exception:
+            pass
+        _sxm_log_fh = None
 
 
 def _start_sxm_proxy(username: str, password: str):
-    global _sxm_process
+    global _sxm_process, _sxm_log_fh
     _stop_sxm_proxy()
-    log_fh = open(SXM_PROXY_LOG, 'w')
+    _sxm_log_fh = open(SXM_PROXY_LOG, 'w')
     _sxm_process = subprocess.Popen(
         ['sxm', username, password, '--port', '9999', '--host', '0.0.0.0'],
-        stdout=log_fh,
-        stderr=log_fh,
+        stdout=_sxm_log_fh,
+        stderr=_sxm_log_fh,
     )
 
 
@@ -251,6 +265,8 @@ def api_get_stations():
 @app.route('/api/stations', methods=['POST'])
 def api_save_stations():
     data = request.get_json(force=True)
+    if not isinstance(data, list):
+        return jsonify({'error': 'Expected a JSON array'}), 400
     _save_json(STATIONS_FILE, data)
     return jsonify({'ok': True})
 
@@ -267,6 +283,8 @@ def api_get_cities():
 @app.route('/api/cities', methods=['POST'])
 def api_save_cities():
     data = request.get_json(force=True)
+    if not isinstance(data, list):
+        return jsonify({'error': 'Expected a JSON array'}), 400
     _save_json(CITIES_FILE, data)
     return jsonify({'ok': True})
 
@@ -283,6 +301,8 @@ def api_get_layout():
 @app.route('/api/layout', methods=['POST'])
 def api_save_layout():
     data = request.get_json(force=True)
+    if not isinstance(data, dict):
+        return jsonify({'error': 'Expected a JSON object'}), 400
     _save_json(LAYOUT_FILE, data)
     return jsonify({'ok': True})
 
@@ -339,7 +359,10 @@ def api_stop():
 def api_volume():
     global _current_volume
     data = request.get_json(force=True)
-    vol = int(data.get('volume', 80))
+    try:
+        vol = int(data.get('volume', 80))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid volume value'}), 400
     vol = max(0, min(100, vol))
     _current_volume = vol
     _send_mpv_command({'command': ['set_property', 'volume', vol]})
@@ -441,7 +464,7 @@ def _search_radiobrowser(q='', city='', limit=24):
         f'{RADIO_BROWSER_BASE}/stations/search',
         params=params,
         timeout=10,
-        headers={'User-Agent': 'NashvilleRadio/1.0'},
+        headers={'User-Agent': 'OasisRadio/1.0'},
     )
     resp.raise_for_status()
     raw = resp.json()
@@ -466,15 +489,24 @@ def _search_radiobrowser(q='', city='', limit=24):
     return results
 
 
-def _search_somafm():
+def _search_somafm(q=''):
     resp = requests.get(SOMAFM_API, timeout=10,
-                        headers={'User-Agent': 'NashvilleRadio/1.0'})
+                        headers={'User-Agent': 'OasisRadio/1.0'})
     resp.raise_for_status()
     data = resp.json()
 
+    q_lower = q.lower()
     results = []
     for ch in data.get('channels', []):
-        # Prefer HLS, then mp3
+        if q_lower:
+            haystack = ' '.join([
+                ch.get('title', ''),
+                ch.get('genre', ''),
+                ch.get('description', ''),
+            ]).lower()
+            if q_lower not in haystack:
+                continue
+        # Prefer AAC, then mp3
         url = ''
         playlists = ch.get('playlists', [])
         for pl in playlists:
@@ -517,7 +549,7 @@ def _search_radiogarden(q='', lat='', lng=''):
         RADIO_GARDEN_SEARCH,
         params=params,
         timeout=10,
-        headers={'User-Agent': 'NashvilleRadio/1.0'},
+        headers={'User-Agent': 'OasisRadio/1.0'},
     )
     resp.raise_for_status()
     data = resp.json()
@@ -562,7 +594,7 @@ def api_search():
 
     if source == 'somafm':
         try:
-            return jsonify(_search_somafm())
+            return jsonify(_search_somafm(q=q))
         except Exception as exc:
             return jsonify({'error': str(exc)}), 502
 
@@ -589,7 +621,7 @@ def api_search():
         except Exception:
             pass
         try:
-            _add(_search_somafm())
+            _add(_search_somafm(q=q))
         except Exception:
             pass
         try:
@@ -604,8 +636,9 @@ def api_search():
 
 @app.route('/api/search/somafm', methods=['GET'])
 def api_search_somafm():
+    q = request.args.get('q', '').strip()
     try:
-        return jsonify(_search_somafm())
+        return jsonify(_search_somafm(q=q))
     except Exception as exc:
         return jsonify({'error': str(exc)}), 502
 

@@ -598,13 +598,21 @@ function renderStationList() {
     const item = document.createElement('div');
     item.className = 'station-item';
     item.draggable = true;
-    item.innerHTML = `
-      <div class="station-item-dot" style="background:${s.color || '#555'}"></div>
-      <div class="station-item-info">
-        <div class="station-item-name">${s.name}</div>
-        <div class="station-item-genre">${s.genre || ''}</div>
-      </div>
-    `;
+    const dot = document.createElement('div');
+    dot.className = 'station-item-dot';
+    dot.style.background = s.color || '#555';
+    const info = document.createElement('div');
+    info.className = 'station-item-info';
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'station-item-name';
+    nameDiv.textContent = s.name;
+    const genreDiv = document.createElement('div');
+    genreDiv.className = 'station-item-genre';
+    genreDiv.textContent = s.genre || '';
+    info.appendChild(nameDiv);
+    info.appendChild(genreDiv);
+    item.appendChild(dot);
+    item.appendChild(info);
     item.addEventListener('dragstart', e => {
       dragData = { source: 'station', id: s.id };
       e.dataTransfer.effectAllowed = 'copy';
@@ -630,14 +638,27 @@ function renderKeys() {
     key.innerHTML = `<span class="key-number">${i + 1}</span>`;
 
     if (station) {
-      key.innerHTML += `
-        <div class="key-content">
-          <div class="key-color-dot" style="background:${station.color || '#555'}"></div>
-          <div class="key-name">${station.name}</div>
-          <div class="key-genre">${station.genre || ''}</div>
-        </div>
-        <div class="key-clear" data-key="${i}" title="Clear">✕</div>
-      `;
+      const content = document.createElement('div');
+      content.className = 'key-content';
+      const colorDot = document.createElement('div');
+      colorDot.className = 'key-color-dot';
+      colorDot.style.background = station.color || '#555';
+      const keyName = document.createElement('div');
+      keyName.className = 'key-name';
+      keyName.textContent = station.name;
+      const keyGenre = document.createElement('div');
+      keyGenre.className = 'key-genre';
+      keyGenre.textContent = station.genre || '';
+      content.appendChild(colorDot);
+      content.appendChild(keyName);
+      content.appendChild(keyGenre);
+      key.appendChild(content);
+      const clearBtn = document.createElement('div');
+      clearBtn.className = 'key-clear';
+      clearBtn.dataset.key = i;
+      clearBtn.title = 'Clear';
+      clearBtn.textContent = '✕';
+      key.appendChild(clearBtn);
     } else {
       key.innerHTML += `<div class="key-empty-icon">+</div>`;
     }

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Nashville Radio — Stream Deck+ Controller
+Oasis Radio — Stream Deck+ Controller
 Runs as a systemd user service outside Docker.
 Reads streamdeck_layout.json at startup and on SIGHUP.
 """
 
 import json
 import os
+import random
 import signal
 import sys
 import threading
@@ -50,6 +51,7 @@ def _load_font(size, bold=False):
 FONT_LARGE  = _load_font(13, bold=True)
 FONT_SMALL  = _load_font(10, bold=False)
 FONT_TINY   = _load_font(9, bold=False)
+FONT_TOUCH  = _load_font(18, bold=True)
 
 # Colors
 C_BG       = (10, 10, 10)
@@ -161,7 +163,6 @@ def _render_station_key(station: dict, playing: bool) -> Image.Image:
 
     # EQ bars when playing
     if playing:
-        import random
         bx = KEY_SIZE[0] - 14
         for j in range(4):
             h = random.randint(4, 14)
@@ -201,7 +202,7 @@ def _render_touch_strip():
         slogan = s.get("slogan", s.get("genre", ""))
 
         draw.text((20, TOUCH_H//2 - 10), name,
-                  font=_load_font(18, bold=True), fill=C_ORANGE, anchor="lm")
+                  font=FONT_TOUCH, fill=C_ORANGE, anchor="lm")
         draw.text((20, TOUCH_H//2 + 12), slogan,
                   font=FONT_SMALL, fill=C_MUTED, anchor="lm")
     else:
