@@ -6,61 +6,74 @@
   <title>Stream Deck Mapper — Oasis Radio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #080808;
-      --surface: #111111;
-      --surface2: #1a1a1a;
-      --surface3: #222222;
+      --bg: #060608;
+      --surface: rgba(14,14,18,0.85);
+      --surface-solid: #0e0e12;
+      --surface2: rgba(22,22,28,0.9);
+      --surface3: #1c1c24;
       --orange: #e8420a;
-      --orange-dim: rgba(232,66,10,0.15);
+      --orange-glow: rgba(232,66,10,0.35);
+      --orange-dim: rgba(232,66,10,0.12);
       --text: #f0ede8;
-      --text-muted: #666;
-      --border: #282828;
-      --radius: 10px;
-      --deck-bg: #1c1c1c;
-      --deck-body: #242424;
-      --deck-edge: #0e0e0e;
-      --key-bg: #0a0a0a;
-      --key-border: #3a3a3a;
+      --text-muted: #6b6b78;
+      --text-dim: #44444f;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --glass: blur(20px) saturate(1.4);
+      --deck-bg: #181820;
+      --deck-body: #1e1e28;
+      --deck-edge: #0a0a0e;
+      --key-bg: #08080c;
+      --key-border: rgba(255,255,255,0.08);
     }
 
     html, body { height: 100%; }
     body {
       background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,66,10,0.03) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(42,42,212,0.02) 0%, transparent 50%);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'DM Sans', system-ui, sans-serif;
       font-size: 14px;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ── Header ── */
     header {
       background: var(--surface);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
       border-bottom: 1px solid var(--border);
-      padding: 0 20px;
-      height: 58px;
+      padding: 0 24px;
+      height: 60px;
       display: flex;
       align-items: center;
       gap: 16px;
     }
     .logo {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 24px;
-      letter-spacing: 2px;
+      font-size: 26px;
+      letter-spacing: 3px;
       color: var(--orange);
+      text-shadow: 0 0 30px var(--orange-glow);
     }
-    .logo span { color: var(--text); }
-    .logo-sep { color: var(--text-muted); margin: 0 6px; }
+    .logo span { color: var(--text); text-shadow: none; }
+    .logo-sep { color: var(--text-dim); margin: 0 6px; }
     .page-title {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 20px;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       color: var(--text-muted);
     }
     .spacer { flex: 1; }
@@ -69,25 +82,35 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 20px;
       border: 1px solid var(--border);
-      background: var(--surface2);
+      background: rgba(255,255,255,0.03);
       color: var(--text-muted);
       font-family: 'DM Sans', sans-serif;
       font-size: 12px;
       font-weight: 500;
       text-decoration: none;
       cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
+      transition: all 0.25s ease;
     }
-    .btn-pill:hover { border-color: var(--orange); color: var(--text); }
-    .btn-save {
-      background: var(--orange);
+    .btn-pill:hover {
       border-color: var(--orange);
-      color: #fff;
+      color: var(--text);
+      background: var(--orange-dim);
     }
-    .btn-save:hover { background: #c23508; border-color: #c23508; color: #fff; }
+    .btn-save {
+      background: linear-gradient(135deg, var(--orange), #c23508);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(232,66,10,0.2);
+    }
+    .btn-save:hover {
+      background: linear-gradient(135deg, #c23508, #a02a06);
+      box-shadow: 0 6px 24px rgba(232,66,10,0.3);
+      color: #fff;
+      border-color: transparent;
+    }
 
     /* ── Layout ── */
     .layout {
@@ -95,14 +118,14 @@
       display: flex;
       gap: 0;
       overflow: hidden;
-      height: calc(100vh - 58px);
+      height: calc(100vh - 60px);
     }
 
     /* ── Station panel ── */
     .station-panel {
       width: 260px;
       flex-shrink: 0;
-      background: var(--surface);
+      background: var(--surface-solid);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -110,14 +133,14 @@
     }
 
     .panel-header {
-      padding: 16px 16px 10px;
+      padding: 18px 18px 12px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
     .panel-header h3 {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 16px;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       color: var(--text-muted);
       margin-bottom: 8px;
     }
@@ -127,23 +150,23 @@
       overflow-y: auto;
       padding: 8px;
       scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
+      scrollbar-color: rgba(255,255,255,0.06) transparent;
     }
 
     .station-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 10px;
-      border-radius: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
       border: 1px solid transparent;
       cursor: grab;
-      transition: background 0.15s, border-color 0.15s;
+      transition: all 0.2s ease;
       margin-bottom: 2px;
       user-select: none;
     }
     .station-item:hover {
-      background: var(--surface2);
+      background: rgba(255,255,255,0.03);
       border-color: var(--border);
     }
     .station-item:active { cursor: grabbing; }
@@ -153,6 +176,7 @@
       height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
     }
 
     .station-item-info { min-width: 0; flex: 1; }
@@ -166,14 +190,14 @@
     }
     .station-item-genre {
       font-size: 11px;
-      color: var(--text-muted);
+      color: var(--text-dim);
     }
 
     .drag-hint {
       font-size: 11px;
-      color: var(--text-muted);
+      color: var(--text-dim);
       text-align: center;
-      padding: 12px;
+      padding: 14px;
       border-top: 1px solid var(--border);
       flex-shrink: 0;
     }
@@ -198,40 +222,39 @@
 
     .streamdeck-body {
       background: linear-gradient(160deg, var(--deck-body) 0%, var(--deck-bg) 60%, var(--deck-edge) 100%);
-      border-radius: 22px;
-      padding: 28px 24px 22px;
+      border-radius: 24px;
+      padding: 30px 26px 24px;
       box-shadow:
-        0 0 0 1px rgba(255,255,255,0.04),
-        0 4px 8px rgba(0,0,0,0.6),
-        0 20px 60px rgba(0,0,0,0.8),
-        inset 0 1px 0 rgba(255,255,255,0.06);
+        0 0 0 1px rgba(255,255,255,0.03),
+        0 4px 12px rgba(0,0,0,0.5),
+        0 20px 60px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.04);
       position: relative;
       width: 560px;
     }
 
-    /* Top label */
     .deck-brand {
       text-align: center;
       font-size: 9px;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.15);
-      margin-bottom: 18px;
+      color: rgba(255,255,255,0.1);
+      margin-bottom: 20px;
       font-weight: 600;
     }
 
-    /* Key grid (4×2) */
+    /* Key grid (4x2) */
     .deck-keys {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
+      gap: 10px;
+      margin-bottom: 18px;
     }
 
     .deck-key {
       aspect-ratio: 1;
       background: var(--key-bg);
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1.5px solid var(--key-border);
       display: flex;
       flex-direction: column;
@@ -239,28 +262,30 @@
       justify-content: center;
       cursor: pointer;
       position: relative;
-      transition: border-color 0.2s, background 0.2s;
+      transition: all 0.25s ease;
       overflow: hidden;
-      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03);
+      box-shadow: inset 0 -2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.02);
       min-height: 90px;
     }
     .deck-key.drag-over {
       border-color: var(--orange);
-      background: rgba(232,66,10,0.12);
+      background: rgba(232,66,10,0.08);
+      box-shadow: inset 0 -2px 6px rgba(0,0,0,0.5), 0 0 20px rgba(232,66,10,0.1);
     }
     .deck-key.has-station {
-      border-color: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.08);
     }
     .deck-key.has-station:hover {
       border-color: var(--orange);
+      box-shadow: inset 0 -2px 6px rgba(0,0,0,0.5), 0 0 16px rgba(232,66,10,0.1);
     }
 
     .key-number {
       position: absolute;
-      top: 4px;
-      left: 6px;
+      top: 5px;
+      left: 7px;
       font-size: 9px;
-      color: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.1);
       font-weight: 600;
     }
 
@@ -278,6 +303,7 @@
       height: 10px;
       border-radius: 50%;
       flex-shrink: 0;
+      box-shadow: 0 0 8px currentColor;
     }
 
     .key-name {
@@ -291,25 +317,25 @@
 
     .key-genre {
       font-size: 9px;
-      color: var(--text-muted);
+      color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
     .key-empty-icon {
-      color: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.06);
       font-size: 22px;
       line-height: 1;
     }
 
     .key-clear {
       position: absolute;
-      top: 3px;
-      right: 4px;
-      width: 16px;
-      height: 16px;
+      top: 4px;
+      right: 5px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: rgba(200,50,30,0.7);
+      background: rgba(224,64,64,0.7);
       color: #fff;
       font-size: 10px;
       display: none;
@@ -317,27 +343,29 @@
       justify-content: center;
       cursor: pointer;
       line-height: 1;
+      transition: background 0.2s;
     }
+    .key-clear:hover { background: rgba(224,64,64,0.9); }
     .deck-key.has-station:hover .key-clear { display: flex; }
 
     /* Touch strip */
     .deck-touch-strip {
-      background: linear-gradient(90deg, #0d0d0d, #151515, #0d0d0d);
-      border-radius: 6px;
-      height: 28px;
-      margin-bottom: 12px;
-      border: 1px solid #1e1e1e;
+      background: linear-gradient(90deg, #0a0a0e, #121218, #0a0a0e);
+      border-radius: 8px;
+      height: 30px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,0.04);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 0 12px;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+      padding: 0 14px;
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.6);
     }
     .touch-strip-label {
       font-size: 10px;
-      color: rgba(255,255,255,0.2);
-      letter-spacing: 1px;
+      color: rgba(255,255,255,0.15);
+      letter-spacing: 1.5px;
       text-transform: uppercase;
     }
     .touch-strip-bar {
@@ -345,14 +373,14 @@
       height: 3px;
       background: linear-gradient(90deg, var(--orange), transparent);
       border-radius: 2px;
-      opacity: 0.3;
+      opacity: 0.25;
     }
 
     /* Dials */
     .deck-dials {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      gap: 10px;
     }
 
     .deck-dial-wrap {
@@ -365,19 +393,19 @@
     .deck-dial {
       width: 100%;
       aspect-ratio: 1;
-      background: radial-gradient(circle at 40% 35%, #2e2e2e, #141414);
+      background: radial-gradient(circle at 38% 32%, #2a2a34, #10101a);
       border-radius: 50%;
-      border: 1.5px solid #333;
+      border: 1.5px solid rgba(255,255,255,0.08);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       position: relative;
-      transition: border-color 0.2s;
+      transition: all 0.25s ease;
       box-shadow:
-        0 3px 8px rgba(0,0,0,0.7),
-        inset 0 1px 0 rgba(255,255,255,0.08);
+        0 3px 10px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.05);
       min-height: 70px;
     }
     .deck-dial::after {
@@ -387,19 +415,20 @@
       right: 10px;
       width: 4px;
       height: 4px;
-      background: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
       border-radius: 50%;
     }
 
     .deck-dial.drag-over {
       border-color: var(--orange);
-      background: radial-gradient(circle at 40% 35%, rgba(232,66,10,0.2), #141414);
+      background: radial-gradient(circle at 38% 32%, rgba(232,66,10,0.15), #10101a);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.6), 0 0 20px rgba(232,66,10,0.1);
     }
 
     .dial-icon { font-size: 18px; line-height: 1; }
     .dial-label {
       font-size: 9px;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.2);
       letter-spacing: 0.5px;
       text-transform: uppercase;
       margin-top: 3px;
@@ -408,7 +437,7 @@
 
     .deck-dial-wrap > .dial-slot-label {
       font-size: 10px;
-      color: var(--text-muted);
+      color: var(--text-dim);
       letter-spacing: 0.5px;
     }
 
@@ -416,9 +445,9 @@
     .control-panel {
       width: 200px;
       flex-shrink: 0;
-      background: var(--surface);
+      background: var(--surface-solid);
       border-left: 1px solid var(--border);
-      padding: 16px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -428,7 +457,7 @@
     .control-panel h3 {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 15px;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       color: var(--text-muted);
       margin-bottom: 8px;
     }
@@ -437,15 +466,18 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px;
-      border-radius: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
       border: 1px solid var(--border);
-      background: var(--surface2);
+      background: rgba(255,255,255,0.02);
       cursor: grab;
-      transition: border-color 0.15s;
+      transition: all 0.2s ease;
       user-select: none;
     }
-    .control-item:hover { border-color: var(--orange); }
+    .control-item:hover {
+      border-color: var(--orange);
+      background: var(--orange-dim);
+    }
     .control-icon { font-size: 18px; width: 24px; text-align: center; }
     .control-name { font-size: 13px; font-weight: 500; }
 
@@ -454,20 +486,22 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: var(--surface2);
+      background: var(--surface-solid);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 16px;
+      border-radius: 10px;
+      padding: 12px 18px;
       font-size: 13px;
+      font-weight: 500;
       color: var(--text);
       opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.25s, transform 0.25s;
+      transform: translateY(8px) scale(0.96);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 300;
       pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast.success { border-color: var(--orange); }
+    .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+    .toast.success { border-color: var(--orange); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(232,66,10,0.1); }
 
     @media (max-width: 900px) {
       .station-panel { width: 180px; }
@@ -487,7 +521,7 @@
   <div class="page-title">Stream Deck Mapper</div>
   <div class="spacer"></div>
   <div class="header-btns">
-    <a class="btn-pill" href="/">← Dashboard</a>
+    <a class="btn-pill" href="/">&larr; Dashboard</a>
     <button class="btn-pill btn-save" id="saveBtn">Save Layout</button>
   </div>
 </header>
@@ -508,10 +542,8 @@
       <div class="streamdeck-body">
         <div class="deck-brand">Stream Deck+</div>
 
-        <!-- 8 LCD keys (4×2) -->
-        <div class="deck-keys" id="deckKeys">
-          <!-- populated by JS -->
-        </div>
+        <!-- 8 LCD keys (4x2) -->
+        <div class="deck-keys" id="deckKeys"></div>
 
         <!-- Touch strip -->
         <div class="deck-touch-strip">
@@ -521,9 +553,7 @@
         </div>
 
         <!-- 4 dials -->
-        <div class="deck-dials" id="deckDials">
-          <!-- populated by JS -->
-        </div>
+        <div class="deck-dials" id="deckDials"></div>
       </div>
     </div>
   </div>
@@ -601,6 +631,7 @@ function renderStationList() {
     const dot = document.createElement('div');
     dot.className = 'station-item-dot';
     dot.style.background = s.color || '#555';
+    dot.style.color = s.color || '#555';
     const info = document.createElement('div');
     info.className = 'station-item-info';
     const nameDiv = document.createElement('div');
@@ -643,6 +674,7 @@ function renderKeys() {
       const colorDot = document.createElement('div');
       colorDot.className = 'key-color-dot';
       colorDot.style.background = station.color || '#555';
+      colorDot.style.color = station.color || '#555';
       const keyName = document.createElement('div');
       keyName.className = 'key-name';
       keyName.textContent = station.name;
@@ -677,7 +709,6 @@ function renderKeys() {
       if (dragData.source === 'station') {
         layout.keys[String(i)] = { type: 'station', id: dragData.id };
       } else if (dragData.source === 'key') {
-        // swap
         const srcSlot = dragData.slot;
         const tmp = layout.keys[String(i)];
         layout.keys[String(i)] = layout.keys[String(srcSlot)] || { type: 'empty' };
@@ -738,7 +769,6 @@ function renderDials() {
       e.preventDefault();
       dial.classList.remove('drag-over');
       if (!dragData) return;
-      // Only control items drop onto dials
       if (dragData.source === 'control') {
         layout.dials[String(i)] = { type: dragData.type };
         dragData = null;

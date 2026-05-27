@@ -6,45 +6,59 @@
   <title>Oasis Radio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #080808;
-      --surface: #111111;
-      --surface2: #1a1a1a;
-      --surface3: #222222;
+      --bg: #060608;
+      --surface: rgba(14,14,18,0.85);
+      --surface-solid: #0e0e12;
+      --surface2: rgba(22,22,28,0.9);
+      --surface3: #1c1c24;
       --orange: #e8420a;
-      --orange-dim: rgba(232,66,10,0.18);
-      --sxm-blue: #1a1a8c;
-      --sxm-blue-dim: rgba(26,26,140,0.18);
+      --orange-glow: rgba(232,66,10,0.35);
+      --orange-dim: rgba(232,66,10,0.12);
+      --orange-soft: rgba(232,66,10,0.06);
+      --sxm-blue: #2a2ad4;
+      --sxm-blue-dim: rgba(42,42,212,0.12);
+      --sxm-glow: rgba(42,42,212,0.3);
       --text: #f0ede8;
-      --text-muted: #777;
-      --border: #282828;
-      --radius: 10px;
+      --text-muted: #6b6b78;
+      --text-dim: #44444f;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --glass: blur(20px) saturate(1.4);
     }
 
     html, body { height: 100%; }
 
     body {
       background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,66,10,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(42,42,212,0.03) 0%, transparent 50%);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'DM Sans', system-ui, sans-serif;
       font-size: 14px;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
       padding-bottom: 80px;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ── Header ── */
     header {
       background: var(--surface);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
       border-bottom: 1px solid var(--border);
-      padding: 0 20px;
-      height: 58px;
+      padding: 0 24px;
+      height: 60px;
       display: flex;
       align-items: center;
       gap: 16px;
@@ -55,13 +69,17 @@
 
     .logo {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 26px;
-      letter-spacing: 2px;
+      font-size: 28px;
+      letter-spacing: 3px;
       color: var(--orange);
       white-space: nowrap;
       flex-shrink: 0;
+      text-shadow: 0 0 30px var(--orange-glow);
     }
-    .logo span { color: var(--text); }
+    .logo span {
+      color: var(--text);
+      text-shadow: none;
+    }
 
     .now-playing-ticker {
       flex: 1;
@@ -70,6 +88,7 @@
       display: flex;
       align-items: center;
       min-width: 0;
+      gap: 10px;
     }
 
     .ticker-inner {
@@ -79,12 +98,16 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: var(--text-muted);
+      color: var(--text-dim);
       font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      transition: color 0.4s;
     }
 
     .ticker-inner.active {
       color: var(--orange);
+      text-shadow: 0 0 20px var(--orange-glow);
       animation: ticker-scroll 18s linear infinite;
     }
 
@@ -108,6 +131,7 @@
       background: var(--orange);
       border-radius: 2px;
       animation: eqb 0.7s ease-in-out infinite alternate;
+      box-shadow: 0 0 6px var(--orange-glow);
     }
     .eq-mini span:nth-child(2) { animation-delay: 0.15s; }
     .eq-mini span:nth-child(3) { animation-delay: 0.3s; }
@@ -128,65 +152,88 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 20px;
       border: 1px solid var(--border);
-      background: var(--surface2);
+      background: rgba(255,255,255,0.03);
       color: var(--text-muted);
       font-family: 'DM Sans', sans-serif;
       font-size: 12px;
       font-weight: 500;
       text-decoration: none;
       cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
+      transition: all 0.25s ease;
     }
-    .btn-pill:hover { border-color: var(--orange); color: var(--text); }
+    .btn-pill:hover {
+      border-color: var(--orange);
+      color: var(--text);
+      background: var(--orange-dim);
+      box-shadow: 0 0 20px rgba(232,66,10,0.1);
+    }
     .btn-pill svg { width: 14px; height: 14px; }
 
     /* ── City Tabs ── */
     .city-bar {
       background: var(--surface);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
       border-bottom: 1px solid var(--border);
-      padding: 0 20px;
+      padding: 0 24px;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
       overflow-x: auto;
       scrollbar-width: none;
     }
     .city-bar::-webkit-scrollbar { display: none; }
 
     .city-tab {
-      padding: 10px 16px;
+      padding: 12px 18px;
       border-bottom: 2px solid transparent;
       color: var(--text-muted);
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
-      transition: color 0.2s, border-color 0.2s;
+      transition: all 0.25s ease;
       user-select: none;
+      position: relative;
     }
     .city-tab:hover { color: var(--text); }
     .city-tab.active {
       color: var(--orange);
       border-bottom-color: var(--orange);
     }
+    .city-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 12px;
+      background: linear-gradient(to top, var(--orange-dim), transparent);
+      pointer-events: none;
+    }
 
     .city-tab-add {
-      padding: 10px 12px;
-      color: var(--text-muted);
+      padding: 12px 14px;
+      color: var(--text-dim);
       cursor: pointer;
       font-size: 18px;
       line-height: 1;
-      transition: color 0.2s;
+      transition: all 0.25s ease;
+      border-radius: 6px;
     }
-    .city-tab-add:hover { color: var(--orange); }
+    .city-tab-add:hover {
+      color: var(--orange);
+      background: var(--orange-dim);
+    }
 
     /* ── Main content ── */
     main {
       flex: 1;
-      padding: 24px 20px;
+      padding: 28px 24px;
       max-width: 1400px;
       width: 100%;
       margin: 0 auto;
@@ -195,46 +242,64 @@
     /* ── Station grid ── */
     .station-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 16px;
       margin-bottom: 40px;
     }
 
     .station-card {
-      background: var(--surface);
+      background: linear-gradient(135deg, rgba(18,18,24,0.95), rgba(14,14,18,0.95));
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
+      border-radius: var(--radius-lg);
+      padding: 18px;
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: border-color 0.2s, transform 0.15s;
-      border-left: 4px solid var(--card-color, #555);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 4px solid var(--card-color, #444);
       user-select: none;
+      animation: cardIn 0.4s ease both;
+    }
+    .station-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.02), transparent 60%);
+      pointer-events: none;
     }
     .station-card:hover {
-      border-color: var(--card-color, #e8420a);
-      transform: translateY(-2px);
+      border-color: var(--card-color, var(--orange));
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--border-hover);
     }
     .station-card.playing {
-      background: var(--orange-dim);
+      background: linear-gradient(135deg, rgba(232,66,10,0.12), rgba(232,66,10,0.04));
       border-color: var(--orange);
       border-left-color: var(--orange);
-      box-shadow: 0 0 20px rgba(232,66,10,0.25);
+      box-shadow: 0 0 40px rgba(232,66,10,0.15), 0 0 80px rgba(232,66,10,0.05);
+      animation: playingPulse 3s ease-in-out infinite;
     }
-    .station-card.dragging {
-      opacity: 0.4;
-    }
+    .station-card.dragging { opacity: 0.4; }
     .station-card.drag-over {
       border-color: var(--orange);
-      background: var(--surface2);
+      background: var(--orange-soft);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes playingPulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(232,66,10,0.15), 0 0 80px rgba(232,66,10,0.05); }
+      50% { box-shadow: 0 0 50px rgba(232,66,10,0.25), 0 0 100px rgba(232,66,10,0.08); }
     }
 
     .card-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .card-top-left {
@@ -250,12 +315,14 @@
       letter-spacing: 0.8px;
       text-transform: uppercase;
       color: var(--text-muted);
-      background: var(--surface2);
-      padding: 2px 8px;
-      border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.04);
     }
     .station-card.playing .genre-badge {
-      background: rgba(232,66,10,0.2);
+      background: rgba(232,66,10,0.15);
+      border-color: rgba(232,66,10,0.2);
       color: var(--orange);
     }
 
@@ -265,9 +332,10 @@
       letter-spacing: 0.5px;
       text-transform: uppercase;
       color: #fff;
-      background: var(--sxm-blue);
-      padding: 2px 6px;
-      border-radius: 4px;
+      background: linear-gradient(135deg, var(--sxm-blue), #3838e0);
+      padding: 3px 7px;
+      border-radius: 5px;
+      box-shadow: 0 2px 8px var(--sxm-glow);
     }
 
     .eq-bars {
@@ -282,6 +350,7 @@
       background: var(--orange);
       border-radius: 2px;
       animation: eqb 0.7s ease-in-out infinite alternate;
+      box-shadow: 0 0 6px var(--orange-glow);
     }
     .eq-bars span:nth-child(2) { animation-delay: 0.2s; }
     .eq-bars span:nth-child(3) { animation-delay: 0.4s; }
@@ -290,8 +359,8 @@
 
     .card-name {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px;
-      letter-spacing: 1px;
+      font-size: 23px;
+      letter-spacing: 1.2px;
       color: var(--text);
       line-height: 1.1;
       margin-bottom: 4px;
@@ -300,8 +369,9 @@
     .card-slogan {
       font-size: 12px;
       color: var(--text-muted);
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       min-height: 16px;
+      line-height: 1.4;
     }
 
     .card-footer {
@@ -310,65 +380,80 @@
     }
 
     .play-btn {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: none;
-      background: var(--surface3);
+      background: rgba(255,255,255,0.06);
       color: var(--text);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s, transform 0.15s;
+      transition: all 0.25s ease;
       flex-shrink: 0;
     }
-    .play-btn:hover { background: var(--orange); transform: scale(1.1); }
-    .station-card.playing .play-btn { background: var(--orange); }
+    .play-btn:hover {
+      background: var(--orange);
+      transform: scale(1.12);
+      box-shadow: 0 4px 20px var(--orange-glow);
+    }
+    .station-card.playing .play-btn {
+      background: var(--orange);
+      box-shadow: 0 4px 20px var(--orange-glow);
+    }
     .play-btn svg { width: 14px; height: 14px; }
 
     /* ── Search section ── */
-    .search-section { margin-bottom: 30px; }
+    .search-section {
+      margin-bottom: 30px;
+    }
 
     .search-section h2 {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      letter-spacing: 1px;
+      font-size: 22px;
+      letter-spacing: 1.5px;
       color: var(--text-muted);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     /* ── Search source tabs ── */
     .search-tabs {
       display: flex;
-      gap: 4px;
-      margin-bottom: 16px;
+      gap: 6px;
+      margin-bottom: 18px;
       flex-wrap: wrap;
     }
 
     .search-tab-btn {
-      padding: 7px 16px;
+      padding: 8px 18px;
       border-radius: 20px;
       border: 1px solid var(--border);
-      background: var(--surface2);
+      background: rgba(255,255,255,0.02);
       color: var(--text-muted);
       font-family: 'DM Sans', sans-serif;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      transition: all 0.25s ease;
       white-space: nowrap;
     }
-    .search-tab-btn:hover { border-color: var(--orange); color: var(--text); }
+    .search-tab-btn:hover {
+      border-color: rgba(255,255,255,0.15);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+    }
     .search-tab-btn.active {
       border-color: var(--orange);
       background: var(--orange-dim);
       color: var(--orange);
+      box-shadow: 0 0 16px rgba(232,66,10,0.1);
     }
     .search-tab-btn.sxm-tab.active {
       border-color: var(--sxm-blue);
       background: var(--sxm-blue-dim);
-      color: #6699ff;
+      color: #7799ff;
+      box-shadow: 0 0 16px rgba(42,42,212,0.1);
     }
 
     /* ── Search panes ── */
@@ -377,29 +462,32 @@
 
     .search-row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .search-input {
       flex: 1;
       min-width: 180px;
-      background: var(--surface);
+      background: rgba(14,14,18,0.8);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 9px 14px;
+      padding: 10px 16px;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.25s ease;
     }
-    .search-input:focus { border-color: var(--orange); }
-    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(232,66,10,0.1), 0 0 20px rgba(232,66,10,0.05);
+    }
+    .search-input::placeholder { color: var(--text-dim); }
 
     .search-btn {
-      padding: 9px 18px;
-      background: var(--orange);
+      padding: 10px 22px;
+      background: linear-gradient(135deg, var(--orange), #c23508);
       border: none;
       border-radius: var(--radius);
       color: #fff;
@@ -407,27 +495,37 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 16px rgba(232,66,10,0.2);
     }
-    .search-btn:hover { background: #c23508; }
-    .search-btn:disabled { background: var(--surface3); color: var(--text-muted); cursor: default; }
+    .search-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(232,66,10,0.3);
+    }
+    .search-btn:active { transform: translateY(0); }
+    .search-btn:disabled { background: var(--surface3); color: var(--text-dim); cursor: default; box-shadow: none; }
 
     .search-results {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 10px;
-      margin-top: 16px;
+      margin-top: 18px;
     }
 
     .result-card {
-      background: var(--surface);
+      background: rgba(14,14,18,0.7);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 12px 14px;
+      padding: 14px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      transition: all 0.25s ease;
+    }
+    .result-card:hover {
+      border-color: var(--border-hover);
+      background: rgba(22,22,28,0.8);
     }
     .result-card.sxm-card {
       border-left: 3px solid var(--sxm-blue);
@@ -441,87 +539,101 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .result-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .result-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
     .add-btn {
-      padding: 5px 12px;
+      padding: 6px 14px;
       background: transparent;
       border: 1px solid var(--orange);
-      border-radius: 6px;
+      border-radius: 8px;
       color: var(--orange);
       font-family: 'DM Sans', sans-serif;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       flex-shrink: 0;
-      transition: background 0.2s, color 0.2s;
+      transition: all 0.25s ease;
     }
-    .add-btn:hover { background: var(--orange); color: #fff; }
-    .add-btn:disabled { border-color: var(--text-muted); color: var(--text-muted); cursor: default; }
+    .add-btn:hover {
+      background: var(--orange);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(232,66,10,0.2);
+    }
+    .add-btn:disabled { border-color: var(--text-dim); color: var(--text-dim); cursor: default; box-shadow: none; }
 
     /* ── SiriusXM pane ── */
     .sxm-login-card {
-      background: var(--surface);
-      border: 1px solid var(--sxm-blue);
-      border-radius: 14px;
-      padding: 28px 24px;
-      max-width: 360px;
+      background: linear-gradient(135deg, rgba(18,18,24,0.95), rgba(14,14,18,0.95));
+      border: 1px solid rgba(42,42,212,0.3);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      max-width: 380px;
+      box-shadow: 0 8px 40px rgba(42,42,212,0.08);
     }
 
     .sxm-login-card h3 {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px;
-      letter-spacing: 1.5px;
-      color: #6699ff;
+      font-size: 24px;
+      letter-spacing: 2px;
+      color: #7799ff;
       margin-bottom: 6px;
+      text-shadow: 0 0 20px var(--sxm-glow);
     }
 
     .sxm-login-card p {
       font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
 
     .sxm-input {
       width: 100%;
-      background: var(--surface2);
+      background: rgba(10,10,14,0.6);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
+      border-radius: 10px;
+      padding: 11px 16px;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
       outline: none;
       margin-bottom: 12px;
-      transition: border-color 0.2s;
+      transition: all 0.25s ease;
     }
-    .sxm-input:focus { border-color: var(--sxm-blue); }
-    .sxm-input::placeholder { color: var(--text-muted); }
+    .sxm-input:focus {
+      border-color: var(--sxm-blue);
+      box-shadow: 0 0 0 3px rgba(42,42,212,0.1);
+    }
+    .sxm-input::placeholder { color: var(--text-dim); }
 
     .sxm-login-btn {
       width: 100%;
-      padding: 10px 0;
-      background: var(--sxm-blue);
+      padding: 12px 0;
+      background: linear-gradient(135deg, var(--sxm-blue), #3838e0);
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       color: #fff;
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s, opacity 0.2s;
+      transition: all 0.25s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-shadow: 0 4px 20px var(--sxm-glow);
     }
-    .sxm-login-btn:hover { background: #2828b8; }
-    .sxm-login-btn:disabled { opacity: 0.5; cursor: default; }
+    .sxm-login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(42,42,212,0.4);
+    }
+    .sxm-login-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
 
     .sxm-error {
-      color: #c0392b;
+      color: #e04040;
       font-size: 12px;
-      margin-top: 10px;
+      margin-top: 12px;
       display: none;
     }
     .sxm-error.show { display: block; }
@@ -539,12 +651,10 @@
       font-size: 13px;
       color: var(--text-muted);
     }
-    .sxm-user-info strong {
-      color: #6699ff;
-    }
+    .sxm-user-info strong { color: #7799ff; }
 
     .sxm-logout-btn {
-      padding: 6px 16px;
+      padding: 7px 18px;
       background: transparent;
       border: 1px solid var(--border);
       border-radius: 20px;
@@ -553,15 +663,15 @@
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
+      transition: all 0.25s ease;
     }
-    .sxm-logout-btn:hover { border-color: #c0392b; color: #c0392b; }
+    .sxm-logout-btn:hover { border-color: #e04040; color: #e04040; }
 
     /* ── Spinner ── */
     .spinner {
       width: 16px;
       height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
+      border: 2px solid rgba(255,255,255,0.2);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
@@ -575,12 +685,14 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 64px;
+      height: 68px;
       background: var(--surface);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
       border-top: 1px solid var(--border);
       display: flex;
       align-items: center;
-      padding: 0 20px;
+      padding: 0 24px;
       gap: 14px;
       z-index: 200;
     }
@@ -588,24 +700,21 @@
     .vol-label {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 14px;
-      letter-spacing: 1px;
-      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
       width: 56px;
       flex-shrink: 0;
       white-space: nowrap;
     }
 
-    .vol-icon {
-      color: var(--text-muted);
-      flex-shrink: 0;
-    }
+    .vol-icon { color: var(--text-muted); flex-shrink: 0; }
 
     .vol-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
       border: 1px solid var(--border);
-      background: var(--surface2);
+      background: rgba(255,255,255,0.03);
       color: var(--text);
       cursor: pointer;
       font-size: 18px;
@@ -613,9 +722,13 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      transition: border-color 0.2s, background 0.2s;
+      transition: all 0.2s ease;
     }
-    .vol-btn:hover { border-color: var(--orange); background: var(--orange-dim); }
+    .vol-btn:hover {
+      border-color: var(--orange);
+      background: var(--orange-dim);
+      box-shadow: 0 0 12px rgba(232,66,10,0.1);
+    }
 
     .vol-slider-wrap {
       flex: 1;
@@ -629,20 +742,33 @@
       width: 100%;
       height: 4px;
       border-radius: 2px;
-      background: linear-gradient(to right, var(--orange) 0%, var(--orange) var(--vol-pct), var(--surface3) var(--vol-pct), var(--surface3) 100%);
+      background: linear-gradient(to right, var(--orange) 0%, var(--orange) var(--vol-pct), rgba(255,255,255,0.06) var(--vol-pct), rgba(255,255,255,0.06) 100%);
       outline: none;
       cursor: pointer;
     }
     input[type=range].vol-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: var(--orange);
       cursor: pointer;
-      transition: transform 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 0 10px var(--orange-glow);
     }
-    input[type=range].vol-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+    input[type=range].vol-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.3);
+      box-shadow: 0 0 20px var(--orange-glow);
+    }
+    input[type=range].vol-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--orange);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 10px var(--orange-glow);
+    }
 
     .vol-number {
       width: 38px;
@@ -651,10 +777,11 @@
       font-weight: 600;
       color: var(--text-muted);
       flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
     }
 
     .vol-stop-btn {
-      padding: 6px 16px;
+      padding: 7px 18px;
       background: transparent;
       border: 1px solid var(--border);
       border-radius: 20px;
@@ -664,117 +791,155 @@
       font-weight: 500;
       cursor: pointer;
       flex-shrink: 0;
-      transition: border-color 0.2s, color 0.2s;
+      transition: all 0.25s ease;
     }
-    .vol-stop-btn:hover { border-color: #c0392b; color: #c0392b; }
+    .vol-stop-btn:hover {
+      border-color: #e04040;
+      color: #e04040;
+      background: rgba(224,64,64,0.06);
+    }
 
     /* ── Modal ── */
     .modal-overlay {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       z-index: 500;
       align-items: center;
       justify-content: center;
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: var(--surface);
+      background: var(--surface-solid);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px 24px;
-      width: 360px;
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      width: 380px;
       max-width: 90vw;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
     .modal h3 {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      letter-spacing: 1px;
-      margin-bottom: 16px;
+      font-size: 22px;
+      letter-spacing: 1.5px;
+      margin-bottom: 18px;
     }
     .modal input {
       width: 100%;
-      background: var(--surface2);
+      background: rgba(10,10,14,0.6);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
+      border-radius: 10px;
+      padding: 11px 16px;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
       outline: none;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
+      transition: border-color 0.25s;
     }
-    .modal input:focus { border-color: var(--orange); }
-    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,66,10,0.1); }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
     .modal-btns button {
-      padding: 8px 18px;
-      border-radius: 8px;
+      padding: 9px 20px;
+      border-radius: 10px;
       border: none;
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s ease;
     }
-    .modal-cancel { background: var(--surface2); color: var(--text-muted); }
-    .modal-save { background: var(--orange); color: #fff; }
+    .modal-cancel {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .modal-cancel:hover { border-color: var(--border-hover); color: var(--text); }
+    .modal-save {
+      background: linear-gradient(135deg, var(--orange), #c23508);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(232,66,10,0.2);
+    }
+    .modal-save:hover { box-shadow: 0 6px 24px rgba(232,66,10,0.3); }
 
     /* ── Toast ── */
     .toast {
       position: fixed;
-      bottom: 80px;
-      right: 20px;
-      background: var(--surface2);
+      bottom: 84px;
+      right: 24px;
+      background: var(--surface-solid);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 16px;
+      border-radius: 10px;
+      padding: 12px 18px;
       font-size: 13px;
+      font-weight: 500;
       color: var(--text);
       opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.25s, transform 0.25s;
+      transform: translateY(8px) scale(0.96);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 300;
       pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast.success { border-color: var(--orange); }
+    .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+    .toast.success { border-color: var(--orange); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(232,66,10,0.1); }
 
     /* ── Pagination ── */
     .pagination {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      margin: 8px 0 28px;
+      gap: 14px;
+      margin: 8px 0 32px;
     }
     .page-btn {
-      width: 36px; height: 36px;
-      border-radius: 8px;
+      width: 38px; height: 38px;
+      border-radius: 10px;
       border: 1px solid var(--border);
-      background: var(--surface);
+      background: rgba(255,255,255,0.02);
       color: var(--text);
       font-size: 18px;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: border-color 0.2s, background 0.2s;
+      transition: all 0.2s ease;
     }
-    .page-btn:hover:not(:disabled) { border-color: var(--orange); background: var(--orange-dim); }
-    .page-btn:disabled { opacity: 0.3; cursor: default; }
-    .page-indicator { font-size: 13px; color: var(--text-muted); min-width: 80px; text-align: center; }
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--orange);
+      background: var(--orange-dim);
+      box-shadow: 0 0 12px rgba(232,66,10,0.1);
+    }
+    .page-btn:disabled { opacity: 0.2; cursor: default; }
+    .page-indicator { font-size: 13px; color: var(--text-dim); min-width: 80px; text-align: center; }
 
     /* ── Empty state ── */
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      color: var(--text-muted);
+      color: var(--text-dim);
     }
-    .empty-state p { font-size: 15px; margin-top: 8px; }
+    .empty-state p {
+      font-size: 15px;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
 
     /* ── Responsive ── */
     @media (max-width: 600px) {
-      .logo { font-size: 20px; }
+      .logo { font-size: 22px; }
       .header-btns .btn-pill span { display: none; }
       .vol-label { display: none; }
-      main { padding: 16px 12px; }
+      main { padding: 18px 14px; }
+      .station-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+      .station-card { padding: 14px; }
+      .card-name { font-size: 19px; }
+      .search-results { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -809,7 +974,6 @@
 <!-- City tabs -->
 <div class="city-bar" id="cityBar">
   <div class="city-tab active" data-city="All">All</div>
-  <!-- populated by JS -->
   <div class="city-tab-add" id="addCityBtn" title="Add city">+</div>
 </div>
 
@@ -843,7 +1007,7 @@
       <form class="search-row" hx-get="/partials/search" hx-target="#searchResults" hx-swap="innerHTML"
             hx-indicator="#searchResults">
         <input type="hidden" name="source" value="all" />
-        <input class="search-input" name="q" id="searchInput" type="text" placeholder="Search station name…" />
+        <input class="search-input" name="q" id="searchInput" type="text" placeholder="Search station name..." />
         <input class="search-input" name="city" id="searchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
         <button class="search-btn" type="submit" id="searchBtn">Search</button>
       </form>
@@ -854,7 +1018,7 @@
     <div class="search-pane" id="pane-radiobrowser">
       <form class="search-row" hx-get="/partials/search" hx-target="#rbSearchResults" hx-swap="innerHTML">
         <input type="hidden" name="source" value="radiobrowser" />
-        <input class="search-input" name="q" id="rbSearchInput" type="text" placeholder="Search station name…" />
+        <input class="search-input" name="q" id="rbSearchInput" type="text" placeholder="Search station name..." />
         <input class="search-input" name="city" id="rbSearchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
         <button class="search-btn" type="submit" id="rbSearchBtn">Search</button>
       </form>
@@ -863,12 +1027,12 @@
 
     <!-- SomaFM pane (htmx) -->
     <div class="search-pane" id="pane-somafm">
-      <div style="margin-bottom:10px;font-size:13px;color:var(--text-muted)">Curated internet radio channels from SomaFM</div>
+      <div style="margin-bottom:12px;font-size:13px;color:var(--text-muted)">Curated internet radio channels from SomaFM</div>
       <div class="search-results" id="somaResults"
            hx-get="/partials/somafm"
            hx-trigger="intersect once"
            hx-indicator="#somaSpinner">
-        <div id="somaSpinner" style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">Loading SomaFM channels…</div>
+        <div id="somaSpinner" style="color:var(--text-dim);font-size:13px;grid-column:1/-1;padding:10px 0">Loading SomaFM channels...</div>
       </div>
     </div>
 
@@ -876,7 +1040,7 @@
     <div class="search-pane" id="pane-radiogarden">
       <form class="search-row" hx-get="/partials/search" hx-target="#rgSearchResults" hx-swap="innerHTML">
         <input type="hidden" name="source" value="radiogarden" />
-        <input class="search-input" name="q" id="rgSearchInput" type="text" placeholder="Search Radio Garden…" />
+        <input class="search-input" name="q" id="rgSearchInput" type="text" placeholder="Search Radio Garden..." />
         <button class="search-btn" type="submit" id="rgSearchBtn">Search</button>
       </form>
       <div class="search-results" id="rgSearchResults"></div>
@@ -884,7 +1048,6 @@
 
     <!-- SiriusXM pane -->
     <div class="search-pane" id="pane-siriusxm">
-      <!-- Login form — shown when not logged in -->
       <div id="sxmLoginSection">
         <div class="sxm-login-card">
           <h3>SiriusXM</h3>
@@ -898,7 +1061,6 @@
         </div>
       </div>
 
-      <!-- Channel list — shown when logged in -->
       <div id="sxmChannelSection" style="display:none">
         <div class="sxm-logged-in-bar">
           <div class="sxm-user-info">Signed in as <strong id="sxmUsernameDisplay"></strong></div>
@@ -918,7 +1080,7 @@
     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
     <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
   </svg>
-  <button class="vol-btn" id="volDown">−</button>
+  <button class="vol-btn" id="volDown">&minus;</button>
   <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" style="--vol-pct:80%" />
   <button class="vol-btn" id="volUp">+</button>
   <span class="vol-number" id="volNumber">80</span>
@@ -1110,6 +1272,7 @@ function renderGrid() {
     const card = document.createElement('div');
     card.className = 'station-card' + (station.id === currentStationId ? ' playing' : '');
     card.style.setProperty('--card-color', station.color || '#555');
+    card.style.animationDelay = (pageIdx * 0.04) + 's';
     card.draggable = true;
     card.dataset.id = station.id;
     card.dataset.index = absIndex;
@@ -1233,14 +1396,13 @@ document.querySelectorAll('.search-tab-btn').forEach(btn => {
     document.getElementById('pane-' + pane).classList.add('active');
     activeSearchPane = pane;
 
-    // Load SXM channels if already logged in
     if (pane === 'siriusxm') {
       refreshSxmPane();
     }
   });
 });
 
-// ── Play SXM station directly by URL (not in stations.json) ──
+// ── Play SXM station directly by URL ──
 async function playSxmStation(station) {
   if (currentStationId === station.id) {
     await api('POST', '/stop');
@@ -1302,7 +1464,7 @@ function buildResultCard(station, container) {
     const sxmPlayBtn = document.createElement('button');
     sxmPlayBtn.className = 'play-btn sxm-play-btn';
     sxmPlayBtn.title = isPlaying ? 'Stop' : 'Play';
-    sxmPlayBtn.style.cssText = 'width:32px;height:32px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+    sxmPlayBtn.style.cssText = 'width:32px;height:32px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px var(--sxm-glow)';
     sxmPlayBtn.innerHTML = isPlaying
       ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
       : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
@@ -1372,22 +1534,22 @@ async function refreshSxmPane() {
 async function loadSxmChannels() {
   sxmChannelsLoaded = true;
   const container = document.getElementById('sxmChannelResults');
-  container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">Loading channels…</div>';
+  container.innerHTML = '<div style="color:var(--text-dim);font-size:13px;grid-column:1/-1;padding:10px 0">Loading channels...</div>';
   try {
     const results = await fetch('/api/sxm/channels').then(r => r.json());
     container.innerHTML = '';
     if (results.error) {
-      container.innerHTML = `<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
+      container.innerHTML = `<div style="color:#e04040;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
       return;
     }
     if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No channels available.</div>';
+      container.innerHTML = '<div style="color:var(--text-dim);font-size:13px;grid-column:1/-1;padding:10px 0">No channels available.</div>';
       return;
     }
     results.forEach(s => buildResultCard(s, container));
   } catch(e) {
     sxmChannelsLoaded = false;
-    container.innerHTML = '<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Failed to load channels.</div>';
+    container.innerHTML = '<div style="color:#e04040;font-size:13px;grid-column:1/-1;padding:10px 0">Failed to load channels.</div>';
   }
 }
 
@@ -1397,7 +1559,6 @@ document.getElementById('sxmLoginBtn').addEventListener('click', async () => {
   const password = document.getElementById('sxmPassword').value.trim();
   const errEl = document.getElementById('sxmLoginError');
   const btn = document.getElementById('sxmLoginBtn');
-  const label = document.getElementById('sxmLoginLabel');
 
   errEl.className = 'sxm-error';
 
@@ -1408,7 +1569,6 @@ document.getElementById('sxmLoginBtn').addEventListener('click', async () => {
   }
 
   btn.disabled = true;
-  label.textContent = 'Signing in…';
   btn.innerHTML = '<div class="spinner"></div><span>Signing in…</span>';
 
   try {

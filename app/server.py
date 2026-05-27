@@ -712,7 +712,7 @@ def _render_results_html(stations_list):
     saved_ids = {s.get('id') for s in saved}
     saved_urls = {s.get('url') for s in saved}
     if not stations_list:
-        return '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>'
+        return '<div style="color:var(--text-dim);font-size:13px;grid-column:1/-1;padding:10px 0">No results found.</div>'
     return ''.join(
         _render_result_card(s, saved_ids, saved_urls) for s in stations_list
     )
@@ -720,7 +720,7 @@ def _render_results_html(stations_list):
 
 def _render_error_html(msg):
     esc_msg = escape(str(msg))
-    return f'<div style="color:#c0392b;font-size:13px;grid-column:1/-1;padding:10px 0">Error: {esc_msg}</div>'
+    return f'<div style="color:#e04040;font-size:13px;grid-column:1/-1;padding:10px 0">Error: {esc_msg}</div>'
 
 
 @app.route('/api/stations/add', methods=['POST'])
