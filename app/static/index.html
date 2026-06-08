@@ -3,149 +3,165 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oasis Radio</title>
+  <title>Just Wingin' It Homestead — Radio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rye&family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #060608;
-      --surface: rgba(14,14,18,0.85);
-      --surface-solid: #0e0e12;
-      --surface2: rgba(22,22,28,0.9);
-      --surface3: #1c1c24;
-      --orange: #e8420a;
-      --orange-glow: rgba(232,66,10,0.35);
-      --orange-dim: rgba(232,66,10,0.12);
-      --orange-soft: rgba(232,66,10,0.06);
-      --sxm-blue: #2a2ad4;
-      --sxm-blue-dim: rgba(42,42,212,0.12);
-      --sxm-glow: rgba(42,42,212,0.3);
-      --text: #f0ede8;
-      --text-muted: #6b6b78;
-      --text-dim: #44444f;
-      --border: rgba(255,255,255,0.06);
-      --border-hover: rgba(255,255,255,0.12);
-      --radius: 12px;
-      --radius-lg: 16px;
-      --glass: blur(20px) saturate(1.4);
+      /* ── Palette ── */
+      --bg:              #1C1410;
+      --bg-deep:         #14100C;
+      --surface:         #2A1F18;
+      --surface-raised:  #34271E;
+      --text:            #FBF1DF;
+      --muted:           #C9A98A;
+      --faint:           #8A6F58;
+      --hairline:        rgba(251,241,223,0.10);
+      --hairline-strong: rgba(251,241,223,0.18);
+
+      /* ── Sign neons (use sparingly) ── */
+      --accent:          #FFB024;   /* marquee amber — primary CTAs, logo, bulbs */
+      --hot-pink:        #FF3D7F;   /* ON AIR / playing */
+      --turquoise:       #2FD4C4;   /* SomaFM */
+      --neon-violet:     #B06CF0;   /* Radio Garden */
+      --sxm-blue:        #3A5BFF;   /* SiriusXM identity */
+      --stop-red:        #E8442E;   /* stop / warning */
+
+      /* ── Derived glows ── */
+      --accent-glow:     rgba(255,176,36,0.30);
+      --hot-pink-glow:   rgba(255,61,127,0.30);
+      --sxm-glow:        rgba(58,91,255,0.28);
+      --stop-glow:       rgba(232,68,46,0.28);
+
+      /* ── Bulb gradient (marquee rail + now-playing only) ── */
+      --bulb-gradient:   linear-gradient(90deg, var(--accent) 0%, var(--hot-pink) 50%, var(--turquoise) 100%);
+
+      /* ── Structure ── */
+      --radius:     14px;
+      --radius-lg:  20px;
     }
 
     html, body { height: 100%; }
 
     body {
       background: var(--bg);
-      background-image:
-        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,66,10,0.04) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(42,42,212,0.03) 0%, transparent 50%);
       color: var(--text);
-      font-family: 'DM Sans', system-ui, sans-serif;
+      font-family: 'Libre Franklin', system-ui, sans-serif;
       font-size: 14px;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      padding-bottom: 80px;
+      padding-bottom: 88px;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Header ── */
+    /* ════════════════════════════════════
+       MARQUEE HEADER BAND
+    ════════════════════════════════════ */
     header {
-      background: var(--surface);
-      backdrop-filter: var(--glass);
-      -webkit-backdrop-filter: var(--glass);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--hairline);
       position: sticky;
       top: 0;
       z-index: 100;
+      /* 4px top bulb-rail */
+      padding-top: 4px;
     }
 
+    .header-rail {
+      height: 4px;
+      background: var(--bulb-gradient);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      opacity: 0.85;
+    }
+
+    /* Faint dot-bulbs along the rail */
+    .header-rail::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1px);
+      background-size: 24px 4px;
+      background-position: 12px 0;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 24px 10px;
+    }
+
+    /* ── Logo: Neon sign ── */
     .logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1;
+      gap: 1px;
+      user-select: none;
+      animation: logoWarmUp 1.4s ease forwards;
+    }
+
+    @keyframes logoWarmUp {
+      0%   { opacity: 0.15; filter: blur(2px); }
+      40%  { opacity: 0.7;  filter: blur(0px); }
+      55%  { opacity: 0.4;  filter: blur(1px); }
+      70%  { opacity: 0.9;  filter: blur(0px); }
+      100% { opacity: 1;    filter: blur(0px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .logo { animation: none; opacity: 1; }
+    }
+
+    .logo-line1 {
+      font-family: 'Rye', serif;
+      font-size: 22px;
+      color: var(--accent);
+      text-shadow:
+        0 0  6px rgba(255,176,36,0.9),
+        0 0 14px rgba(255,176,36,0.6),
+        0 0 28px rgba(255,176,36,0.35);
+      letter-spacing: 1px;
+    }
+
+    .logo-line2 {
+      font-family: 'Rye', serif;
+      font-size: 15px;
+      color: var(--accent);
+      text-shadow:
+        0 0  4px rgba(255,176,36,0.8),
+        0 0 12px rgba(255,176,36,0.4);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .logo-tag {
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
       letter-spacing: 3px;
-      color: var(--orange);
-      white-space: nowrap;
-      flex-shrink: 0;
-      text-shadow: 0 0 30px var(--orange-glow);
-    }
-    .logo span {
-      color: var(--text);
-      text-shadow: none;
+      text-transform: uppercase;
+      color: var(--hot-pink);
+      text-shadow: 0 0 8px rgba(255,61,127,0.6);
+      margin-top: 2px;
     }
 
-    .now-playing-ticker {
-      flex: 1;
-      overflow: hidden;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      min-width: 0;
-      gap: 10px;
-    }
-
-    .ticker-inner {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--text-dim);
-      font-size: 13px;
-      font-weight: 400;
-      letter-spacing: 0.3px;
-      transition: color 0.4s;
-    }
-
-    .ticker-inner.active {
-      color: var(--orange);
-      text-shadow: 0 0 20px var(--orange-glow);
-      animation: ticker-scroll 18s linear infinite;
-    }
-
-    @keyframes ticker-scroll {
-      0%   { transform: translateX(0); }
-      40%  { transform: translateX(0); }
-      60%  { transform: translateX(calc(-100% + 300px)); }
-      100% { transform: translateX(0); }
-    }
-
-    .eq-mini {
-      display: none;
-      gap: 2px;
-      align-items: flex-end;
-      height: 16px;
-      flex-shrink: 0;
-    }
-    .eq-mini.active { display: flex; }
-    .eq-mini span {
-      width: 3px;
-      background: var(--orange);
-      border-radius: 2px;
-      animation: eqb 0.7s ease-in-out infinite alternate;
-      box-shadow: 0 0 6px var(--orange-glow);
-    }
-    .eq-mini span:nth-child(2) { animation-delay: 0.15s; }
-    .eq-mini span:nth-child(3) { animation-delay: 0.3s; }
-    .eq-mini span:nth-child(4) { animation-delay: 0.1s; }
-
-    @keyframes eqb {
-      from { height: 3px; }
-      to   { height: 14px; }
-    }
-
+    /* ── Header nav ── */
     .header-btns {
       display: flex;
       gap: 8px;
       flex-shrink: 0;
+      margin-left: auto;
     }
 
     .btn-pill {
@@ -154,224 +170,465 @@
       gap: 6px;
       padding: 7px 16px;
       border-radius: 20px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.03);
-      color: var(--text-muted);
-      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--hairline-strong);
+      background: rgba(251,241,223,0.03);
+      color: var(--muted);
+      font-family: 'Libre Franklin', sans-serif;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       text-decoration: none;
       cursor: pointer;
       transition: all 0.25s ease;
+      letter-spacing: 0.5px;
     }
     .btn-pill:hover {
-      border-color: var(--orange);
+      border-color: var(--accent);
       color: var(--text);
-      background: var(--orange-dim);
-      box-shadow: 0 0 20px rgba(232,66,10,0.1);
+      background: rgba(255,176,36,0.08);
+      box-shadow: 0 0 14px rgba(255,176,36,0.12);
+    }
+    .btn-pill:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
     .btn-pill svg { width: 14px; height: 14px; }
 
-    /* ── City Tabs ── */
-    .city-bar {
-      background: var(--surface);
-      backdrop-filter: var(--glass);
-      -webkit-backdrop-filter: var(--glass);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
+    /* ════════════════════════════════════
+       NOW-PLAYING HERO — The Lit Marquee
+    ════════════════════════════════════ */
+    .now-playing-hero {
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--hairline);
+      padding: 12px 24px 14px;
       display: flex;
       align-items: center;
-      gap: 2px;
+      gap: 14px;
+      min-height: 64px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Perimeter bulb chase — only when .playing class is on this element */
+    .now-playing-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 3px solid transparent;
+      border-radius: 0;
+      background: transparent;
+      pointer-events: none;
+      transition: opacity 0.5s;
+      opacity: 0;
+    }
+
+    .now-playing-hero.playing {
+      background: linear-gradient(90deg, rgba(255,176,36,0.06) 0%, rgba(255,61,127,0.04) 50%, rgba(47,212,196,0.04) 100%);
+    }
+
+    /* Bulb-dot border chase */
+    .now-playing-hero .hero-bulb-border {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .now-playing-hero.playing .hero-bulb-border {
+      display: block;
+    }
+
+    /* Top + bottom bulb rails */
+    .hero-bulb-border::before,
+    .hero-bulb-border::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background-image: radial-gradient(circle, var(--accent) 2px, transparent 2px);
+      background-size: 18px 6px;
+      animation: bulbChase 1.6s cubic-bezier(.4,0,.2,1) infinite;
+    }
+    .hero-bulb-border::before { top: 0; }
+    .hero-bulb-border::after  { bottom: 0; animation-delay: 0.8s; }
+
+    @keyframes bulbChase {
+      0%   { background-position: 0 0; opacity: 0.7; }
+      50%  { opacity: 1; }
+      100% { background-position: 18px 0; opacity: 0.7; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-bulb-border::before,
+      .hero-bulb-border::after { animation: none; opacity: 1; }
+    }
+
+    /* ON AIR badge */
+    .on-air-badge {
+      display: none;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--bg-deep);
+      background: var(--hot-pink);
+      padding: 3px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px var(--hot-pink-glow);
+    }
+    .now-playing-hero.playing .on-air-badge {
+      display: block;
+      animation: onAirWarmUp 1.8s ease forwards;
+    }
+    @keyframes onAirWarmUp {
+      0%   { opacity: 0; }
+      15%  { opacity: 1; }
+      30%  { opacity: 0; }
+      50%  { opacity: 1; }
+      65%  { opacity: 0.2; }
+      80%  { opacity: 1; }
+      100% { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .now-playing-hero.playing .on-air-badge { animation: none; opacity: 1; }
+    }
+
+    /* EQ mini — rebirthed as small amber VU bulbs */
+    .eq-mini {
+      display: none;
+      gap: 3px;
+      align-items: flex-end;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .eq-mini.active { display: flex; }
+    .eq-mini span {
+      width: 5px;
+      border-radius: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 5px var(--accent-glow);
+      animation: eqb 0.7s ease-in-out infinite alternate;
+    }
+    .eq-mini span:nth-child(2) { animation-delay: 0.15s; }
+    .eq-mini span:nth-child(3) { animation-delay: 0.30s; }
+    .eq-mini span:nth-child(4) { animation-delay: 0.10s; }
+
+    @keyframes eqb {
+      from { height: 4px; opacity: 0.5; }
+      to   { height: 18px; opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .eq-mini span { animation: none; height: 10px; }
+    }
+
+    /* Ticker text */
+    .ticker-wrap {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .ticker-inner {
+      font-family: 'Rye', serif;
+      font-size: 18px;
+      color: var(--faint);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.4s, text-shadow 0.4s;
+    }
+
+    .ticker-inner.active {
+      color: var(--text);
+      text-shadow: 0 0 20px rgba(251,241,223,0.25);
+    }
+
+    /* ════════════════════════════════════
+       CITY TAB BAR — Marquee picks
+    ════════════════════════════════════ */
+    .city-bar {
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--hairline);
+      padding: 0 16px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
       overflow-x: auto;
       scrollbar-width: none;
     }
     .city-bar::-webkit-scrollbar { display: none; }
 
     .city-tab {
-      padding: 12px 18px;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      font-size: 13px;
-      font-weight: 500;
+      padding: 11px 20px 9px;
+      color: var(--faint);
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.25s ease;
+      transition: color 0.2s;
       user-select: none;
       position: relative;
+      border-bottom: 3px solid transparent;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
     }
-    .city-tab:hover { color: var(--text); }
+    .city-tab:hover { color: var(--muted); }
     .city-tab.active {
-      color: var(--orange);
-      border-bottom-color: var(--orange);
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      text-shadow: 0 0 8px rgba(255,176,36,0.35);
     }
+    /* Lit-bulb underline dot on active tab */
     .city-tab.active::after {
       content: '';
       position: absolute;
-      bottom: 0;
+      bottom: -1px;
       left: 50%;
       transform: translateX(-50%);
-      width: 100%;
-      height: 12px;
-      background: linear-gradient(to top, var(--orange-dim), transparent);
-      pointer-events: none;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
     }
 
     .city-tab-add {
-      padding: 12px 14px;
-      color: var(--text-dim);
+      padding: 10px 14px;
+      color: var(--faint);
       cursor: pointer;
-      font-size: 18px;
+      font-size: 20px;
+      font-weight: 300;
       line-height: 1;
-      transition: all 0.25s ease;
+      transition: color 0.2s, background 0.2s;
       border-radius: 6px;
+      display: flex;
+      align-items: center;
     }
     .city-tab-add:hover {
-      color: var(--orange);
-      background: var(--orange-dim);
+      color: var(--accent);
+      background: rgba(255,176,36,0.07);
+    }
+    .city-tab-add:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
 
-    /* ── Main content ── */
+    /* ════════════════════════════════════
+       MAIN CONTENT
+    ════════════════════════════════════ */
     main {
       flex: 1;
       padding: 28px 24px;
-      max-width: 1400px;
+      max-width: 1320px;
       width: 100%;
       margin: 0 auto;
     }
 
-    /* ── Station grid ── */
+    /* ════════════════════════════════════
+       STATION GRID — Wall of Enamel Signs
+    ════════════════════════════════════ */
     .station-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 16px;
-      margin-bottom: 40px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 32px;
     }
 
     .station-card {
-      background: linear-gradient(135deg, rgba(18,18,24,0.95), rgba(14,14,18,0.95));
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 18px;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      border-left: 5px solid var(--card-color, #5A4A3A);
+      padding: 18px 18px 16px;
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border-left: 4px solid var(--card-color, #444);
+      transition: transform 0.18s cubic-bezier(.4,0,.2,1),
+                  box-shadow 0.18s cubic-bezier(.4,0,.2,1),
+                  background 0.3s;
       user-select: none;
-      animation: cardIn 0.4s ease both;
+      animation: cardIn 0.35s ease both;
     }
-    .station-card::before {
+
+    /* Corner screw dots — hand-mounted sign feel */
+    .station-card::before,
+    .station-card::after {
       content: '';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.02), transparent 60%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--bg-deep);
+      border: 1px solid var(--hairline-strong);
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.5);
       pointer-events: none;
     }
+    .station-card::before { top: 8px; right: 8px; }
+    .station-card::after  { bottom: 8px; right: 8px; }
+
     .station-card:hover {
-      border-color: var(--card-color, var(--orange));
-      transform: translateY(-3px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--border-hover);
+      transform: translateY(-2px) rotate(-0.3deg);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px var(--hairline-strong);
+      background: var(--surface-raised);
     }
+
+    .station-card:active {
+      transform: translateY(0) rotate(0);
+      transition-duration: 60ms;
+    }
+
+    /* Playing state: bulb perimeter + lit card */
     .station-card.playing {
-      background: linear-gradient(135deg, rgba(232,66,10,0.12), rgba(232,66,10,0.04));
-      border-color: var(--orange);
-      border-left-color: var(--orange);
-      box-shadow: 0 0 40px rgba(232,66,10,0.15), 0 0 80px rgba(232,66,10,0.05);
-      animation: playingPulse 3s ease-in-out infinite;
+      border-color: var(--card-color, var(--accent));
+      border-left-color: var(--card-color, var(--accent));
+      background: color-mix(in srgb, var(--card-color, var(--accent)) 10%, var(--surface));
+      box-shadow: 0 0 0 1px var(--card-color, var(--accent)),
+                  0 0 28px rgba(0,0,0,0.5);
+      transform: none;
     }
-    .station-card.dragging { opacity: 0.4; }
-    .station-card.drag-over {
-      border-color: var(--orange);
-      background: var(--orange-soft);
+
+    /* Card perimeter bulbs on playing */
+    .station-card.playing .card-bulb-border {
+      display: block;
     }
+    .card-bulb-border {
+      display: none;
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .card-bulb-border::before,
+    .card-bulb-border::after {
+      content: '';
+      position: absolute;
+      background-image: radial-gradient(circle, var(--card-color, var(--accent)) 1.5px, transparent 1.5px);
+      background-size: 14px 5px;
+      animation: bulbChase 1.6s cubic-bezier(.4,0,.2,1) infinite;
+      opacity: 0.75;
+    }
+    .card-bulb-border::before { top: 0;    left: 0; right: 0; height: 5px; }
+    .card-bulb-border::after  { bottom: 0; left: 0; right: 0; height: 5px; animation-delay: 0.8s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card-bulb-border::before,
+      .card-bulb-border::after { animation: none; opacity: 0.8; }
+    }
+
+    .station-card.dragging  { opacity: 0.35; }
+    .station-card.drag-over { outline: 2px dashed var(--accent); }
 
     @keyframes cardIn {
-      from { opacity: 0; transform: translateY(12px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes playingPulse {
-      0%, 100% { box-shadow: 0 0 40px rgba(232,66,10,0.15), 0 0 80px rgba(232,66,10,0.05); }
-      50% { box-shadow: 0 0 50px rgba(232,66,10,0.25), 0 0 100px rgba(232,66,10,0.08); }
-    }
-
+    /* Card header row */
     .card-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .card-top-left {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
     }
 
+    /* Genre badge — stamped enamel */
     .genre-badge {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      background: rgba(255,255,255,0.04);
-      padding: 3px 8px;
-      border-radius: 6px;
-      border: 1px solid rgba(255,255,255,0.04);
-    }
-    .station-card.playing .genre-badge {
-      background: rgba(232,66,10,0.15);
-      border-color: rgba(232,66,10,0.2);
-      color: var(--orange);
-    }
-
-    .sxm-badge {
+      font-family: 'Libre Franklin', sans-serif;
       font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: #fff;
-      background: linear-gradient(135deg, var(--sxm-blue), #3838e0);
+      color: var(--muted);
+      background: rgba(251,241,223,0.06);
       padding: 3px 7px;
       border-radius: 5px;
+      border: 1px solid var(--hairline);
+    }
+    .station-card.playing .genre-badge {
+      color: var(--card-color, var(--accent));
+      border-color: color-mix(in srgb, var(--card-color, var(--accent)) 40%, transparent);
+      background: color-mix(in srgb, var(--card-color, var(--accent)) 12%, transparent);
+    }
+
+    /* SXM badge */
+    .sxm-badge {
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #fff;
+      background: var(--sxm-blue);
+      padding: 3px 6px;
+      border-radius: 4px;
       box-shadow: 0 2px 8px var(--sxm-glow);
     }
 
+    /* EQ bars (card playing indicator) */
     .eq-bars {
       display: none;
       gap: 2px;
       align-items: flex-end;
-      height: 18px;
+      height: 16px;
     }
     .station-card.playing .eq-bars { display: flex; }
     .eq-bars span {
       width: 3px;
-      background: var(--orange);
       border-radius: 2px;
+      background: var(--card-color, var(--accent));
       animation: eqb 0.7s ease-in-out infinite alternate;
-      box-shadow: 0 0 6px var(--orange-glow);
+      box-shadow: 0 0 4px rgba(255,176,36,0.4);
     }
     .eq-bars span:nth-child(2) { animation-delay: 0.2s; }
     .eq-bars span:nth-child(3) { animation-delay: 0.4s; }
     .eq-bars span:nth-child(4) { animation-delay: 0.1s; }
     .eq-bars span:nth-child(5) { animation-delay: 0.35s; }
 
-    .card-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 23px;
-      letter-spacing: 1.2px;
-      color: var(--text);
-      line-height: 1.1;
-      margin-bottom: 4px;
+    @media (prefers-reduced-motion: reduce) {
+      .eq-bars span { animation: none; height: 8px; }
     }
 
+    /* Station name — Rye woodtype */
+    .card-name {
+      font-family: 'Rye', serif;
+      font-size: 19px;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 5px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    /* Slogan — italic Libre Franklin */
     .card-slogan {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      min-height: 16px;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--muted);
+      margin-bottom: 14px;
+      min-height: 14px;
       line-height: 1.4;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
     .card-footer {
@@ -379,45 +636,62 @@
       justify-content: flex-end;
     }
 
+    /* Round amber play knob */
     .play-btn {
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
       border-radius: 50%;
-      border: none;
-      background: rgba(255,255,255,0.06);
-      color: var(--text);
+      border: 2px solid var(--hairline-strong);
+      background: rgba(251,241,223,0.05);
+      color: var(--muted);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
       flex-shrink: 0;
     }
     .play-btn:hover {
-      background: var(--orange);
-      transform: scale(1.12);
-      box-shadow: 0 4px 20px var(--orange-glow);
+      border-color: var(--accent);
+      background: rgba(255,176,36,0.12);
+      color: var(--accent);
+      transform: scale(1.08) rotate(5deg);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .play-btn:active {
+      transform: scale(0.94) rotate(0deg);
+      transition-duration: 60ms;
     }
     .station-card.playing .play-btn {
-      background: var(--orange);
-      box-shadow: 0 4px 20px var(--orange-glow);
+      border-color: var(--card-color, var(--accent));
+      background: var(--card-color, var(--accent));
+      color: var(--bg-deep);
+      box-shadow: 0 4px 16px var(--accent-glow);
     }
-    .play-btn svg { width: 14px; height: 14px; }
+    .play-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .play-btn svg { width: 16px; height: 16px; }
 
-    /* ── Search section ── */
+    /* ════════════════════════════════════
+       SEARCH SECTION
+    ════════════════════════════════════ */
     .search-section {
+      margin-top: 8px;
       margin-bottom: 30px;
     }
 
     .search-section h2 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
+      font-family: 'Rye', serif;
+      font-size: 24px;
+      color: var(--muted);
+      margin-bottom: 18px;
+      letter-spacing: 1px;
     }
 
-    /* ── Search source tabs ── */
+    /* Search source tabs — enamel pick-tags */
     .search-tabs {
       display: flex;
       gap: 6px;
@@ -426,37 +700,51 @@
     }
 
     .search-tab-btn {
-      padding: 8px 18px;
+      padding: 7px 16px;
       border-radius: 20px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.02);
-      color: var(--text-muted);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
+      border: 1px solid var(--hairline-strong);
+      background: rgba(251,241,223,0.03);
+      color: var(--faint);
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
       white-space: nowrap;
     }
     .search-tab-btn:hover {
-      border-color: rgba(255,255,255,0.15);
-      color: var(--text);
-      background: rgba(255,255,255,0.04);
+      border-color: var(--hairline-strong);
+      color: var(--muted);
+    }
+    .search-tab-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
     .search-tab-btn.active {
-      border-color: var(--orange);
-      background: var(--orange-dim);
-      color: var(--orange);
-      box-shadow: 0 0 16px rgba(232,66,10,0.1);
+      border-color: var(--accent);
+      background: rgba(255,176,36,0.10);
+      color: var(--accent);
+    }
+    /* Per-source tints */
+    .search-tab-btn[data-pane="somafm"].active {
+      border-color: var(--turquoise);
+      background: rgba(47,212,196,0.10);
+      color: var(--turquoise);
+    }
+    .search-tab-btn[data-pane="radiogarden"].active {
+      border-color: var(--neon-violet);
+      background: rgba(176,108,240,0.10);
+      color: var(--neon-violet);
     }
     .search-tab-btn.sxm-tab.active {
       border-color: var(--sxm-blue);
-      background: var(--sxm-blue-dim);
+      background: rgba(58,91,255,0.10);
       color: #7799ff;
-      box-shadow: 0 0 16px rgba(42,42,212,0.1);
     }
 
-    /* ── Search panes ── */
+    /* Search panes */
     .search-pane { display: none; }
     .search-pane.active { display: block; }
 
@@ -466,66 +754,71 @@
       flex-wrap: wrap;
     }
 
+    /* Inset cream-on-ink input wells */
     .search-input {
       flex: 1;
       min-width: 180px;
-      background: rgba(14,14,18,0.8);
-      border: 1px solid var(--border);
+      background: var(--bg-deep);
+      border: 1px solid var(--hairline-strong);
       border-radius: var(--radius);
       padding: 10px 16px;
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 13px;
       outline: none;
-      transition: all 0.25s ease;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .search-input:focus {
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(232,66,10,0.1), 0 0 20px rgba(232,66,10,0.05);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,176,36,0.14);
     }
-    .search-input::placeholder { color: var(--text-dim); }
+    .search-input::placeholder { color: var(--faint); }
 
+    /* Amber enamel search button */
     .search-btn {
-      padding: 10px 22px;
-      background: linear-gradient(135deg, var(--orange), #c23508);
+      padding: 10px 24px;
+      background: var(--accent);
       border: none;
       border-radius: var(--radius);
-      color: #fff;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
+      color: var(--bg-deep);
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
       cursor: pointer;
-      transition: all 0.25s ease;
-      box-shadow: 0 4px 16px rgba(232,66,10,0.2);
+      transition: all 0.2s ease;
+      box-shadow: 0 3px 12px rgba(255,176,36,0.25);
     }
     .search-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 24px rgba(232,66,10,0.3);
+      box-shadow: 0 5px 18px rgba(255,176,36,0.35);
     }
     .search-btn:active { transform: translateY(0); }
-    .search-btn:disabled { background: var(--surface3); color: var(--text-dim); cursor: default; box-shadow: none; }
+    .search-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+    .search-btn:disabled { background: var(--surface-raised); color: var(--faint); cursor: default; box-shadow: none; }
 
+    /* Search results grid — compact ticket stubs */
     .search-results {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 10px;
-      margin-top: 18px;
+      gap: 8px;
+      margin-top: 16px;
     }
 
     .result-card {
-      background: rgba(14,14,18,0.7);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
+      background: var(--bg-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      padding: 12px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      transition: all 0.25s ease;
+      transition: border-color 0.2s, background 0.2s;
     }
     .result-card:hover {
-      border-color: var(--border-hover);
-      background: rgba(22,22,28,0.8);
+      border-color: var(--hairline-strong);
+      background: var(--surface);
     }
     .result-card.sxm-card {
       border-left: 3px solid var(--sxm-blue);
@@ -533,108 +826,143 @@
 
     .result-info { min-width: 0; flex: 1; }
     .result-name {
-      font-weight: 600;
+      font-family: 'Libre Franklin', sans-serif;
+      font-weight: 700;
       font-size: 13px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: var(--text);
     }
-    .result-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .result-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      font-family: 'Libre Franklin', sans-serif;
+    }
 
     .add-btn {
       padding: 6px 14px;
       background: transparent;
-      border: 1px solid var(--orange);
+      border: 1px solid var(--accent);
       border-radius: 8px;
-      color: var(--orange);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      font-weight: 600;
+      color: var(--accent);
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
       cursor: pointer;
       flex-shrink: 0;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
+      letter-spacing: 0.3px;
     }
     .add-btn:hover {
-      background: var(--orange);
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(232,66,10,0.2);
+      background: var(--accent);
+      color: var(--bg-deep);
+      box-shadow: 0 3px 12px rgba(255,176,36,0.25);
     }
-    .add-btn:disabled { border-color: var(--text-dim); color: var(--text-dim); cursor: default; box-shadow: none; }
+    .add-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .add-btn:disabled { border-color: var(--faint); color: var(--faint); cursor: default; }
 
-    /* ── SiriusXM pane ── */
+    /* SomaFM pane helper text */
+    .soma-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      font-family: 'Libre Franklin', sans-serif;
+    }
+
+    /* ════════════════════════════════════
+       SIRIUSXM — "Backstage Pass" card
+    ════════════════════════════════════ */
     .sxm-login-card {
-      background: linear-gradient(135deg, rgba(18,18,24,0.95), rgba(14,14,18,0.95));
-      border: 1px solid rgba(42,42,212,0.3);
+      background: var(--surface);
+      border: 1px solid rgba(58,91,255,0.30);
       border-radius: var(--radius-lg);
-      padding: 32px 28px;
+      padding: 30px 26px;
       max-width: 380px;
-      box-shadow: 0 8px 40px rgba(42,42,212,0.08);
+      box-shadow: 0 8px 32px rgba(58,91,255,0.08);
+      position: relative;
+    }
+    /* Electric-blue left rail */
+    .sxm-login-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 20px;
+      bottom: 20px;
+      width: 4px;
+      border-radius: 0 3px 3px 0;
+      background: var(--sxm-blue);
+      box-shadow: 0 0 12px var(--sxm-glow);
     }
 
     .sxm-login-card h3 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 24px;
-      letter-spacing: 2px;
+      font-family: 'Rye', serif;
+      font-size: 20px;
       color: #7799ff;
-      margin-bottom: 6px;
-      text-shadow: 0 0 20px var(--sxm-glow);
+      margin-bottom: 4px;
+      text-shadow: 0 0 14px var(--sxm-glow);
     }
 
     .sxm-login-card p {
-      font-size: 13px;
-      color: var(--text-muted);
+      font-size: 12px;
+      color: var(--muted);
       margin-bottom: 20px;
-      line-height: 1.5;
+      line-height: 1.55;
+      font-family: 'Libre Franklin', sans-serif;
     }
 
     .sxm-input {
       width: 100%;
-      background: rgba(10,10,14,0.6);
-      border: 1px solid var(--border);
+      background: var(--bg-deep);
+      border: 1px solid var(--hairline-strong);
       border-radius: 10px;
-      padding: 11px 16px;
+      padding: 10px 14px;
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 13px;
       outline: none;
-      margin-bottom: 12px;
-      transition: all 0.25s ease;
+      margin-bottom: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .sxm-input:focus {
       border-color: var(--sxm-blue);
-      box-shadow: 0 0 0 3px rgba(42,42,212,0.1);
+      box-shadow: 0 0 0 3px rgba(58,91,255,0.14);
     }
-    .sxm-input::placeholder { color: var(--text-dim); }
+    .sxm-input::placeholder { color: var(--faint); }
 
     .sxm-login-btn {
       width: 100%;
       padding: 12px 0;
-      background: linear-gradient(135deg, var(--sxm-blue), #3838e0);
+      background: var(--sxm-blue);
       border: none;
       border-radius: 10px;
       color: #fff;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 20px var(--sxm-glow);
+      box-shadow: 0 4px 16px var(--sxm-glow);
+      letter-spacing: 0.3px;
     }
     .sxm-login-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 28px rgba(42,42,212,0.4);
+      box-shadow: 0 6px 24px rgba(58,91,255,0.40);
     }
+    .sxm-login-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
     .sxm-login-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
 
     .sxm-error {
-      color: #e04040;
+      color: var(--stop-red);
       font-size: 12px;
-      margin-top: 12px;
+      margin-top: 10px;
       display: none;
+      font-family: 'Libre Franklin', sans-serif;
     }
     .sxm-error.show { display: block; }
 
@@ -642,36 +970,44 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
       gap: 10px;
     }
 
     .sxm-user-info {
       font-size: 13px;
-      color: var(--text-muted);
+      color: var(--muted);
+      font-family: 'Libre Franklin', sans-serif;
     }
     .sxm-user-info strong { color: #7799ff; }
 
     .sxm-logout-btn {
-      padding: 7px 18px;
+      padding: 6px 16px;
       background: transparent;
-      border: 1px solid var(--border);
+      border: 1px solid var(--hairline-strong);
       border-radius: 20px;
-      color: var(--text-muted);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
+      color: var(--muted);
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
+      letter-spacing: 0.3px;
     }
-    .sxm-logout-btn:hover { border-color: #e04040; color: #e04040; }
+    .sxm-logout-btn:hover {
+      border-color: var(--stop-red);
+      color: var(--stop-red);
+    }
+    .sxm-logout-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    /* ── Spinner ── */
+    /* ════════════════════════════════════
+       SPINNER
+    ════════════════════════════════════ */
     .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.2);
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255,255,255,0.25);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
@@ -679,385 +1015,504 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Volume bar (fixed bottom) ── */
+    /* ════════════════════════════════════
+       VOLUME BAR — Brushed amp faceplate
+    ════════════════════════════════════ */
     .volume-bar {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 68px;
-      background: var(--surface);
-      backdrop-filter: var(--glass);
-      -webkit-backdrop-filter: var(--glass);
-      border-top: 1px solid var(--border);
+      height: 72px;
+      background: var(--bg-deep);
+      border-top: 1px solid var(--hairline-strong);
+      /* subtle brushed texture */
+      background-image: repeating-linear-gradient(
+        90deg,
+        rgba(251,241,223,0.012) 0px,
+        rgba(251,241,223,0.012) 1px,
+        transparent 1px,
+        transparent 8px
+      );
       display: flex;
       align-items: center;
       padding: 0 24px;
-      gap: 14px;
+      gap: 12px;
       z-index: 200;
     }
 
     .vol-label {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 14px;
-      letter-spacing: 1.5px;
-      color: var(--text-dim);
+      font-family: 'Rye', serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--faint);
       width: 56px;
       flex-shrink: 0;
       white-space: nowrap;
     }
 
-    .vol-icon { color: var(--text-muted); flex-shrink: 0; }
+    .vol-icon { color: var(--faint); flex-shrink: 0; }
 
+    /* +/- enamel buttons */
     .vol-btn {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
+      border: 1px solid var(--hairline-strong);
+      background: var(--surface);
+      color: var(--muted);
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
+      font-family: 'Libre Franklin', sans-serif;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      transition: all 0.2s ease;
+      transition: all 0.18s ease;
     }
     .vol-btn:hover {
-      border-color: var(--orange);
-      background: var(--orange-dim);
-      box-shadow: 0 0 12px rgba(232,66,10,0.1);
+      border-color: var(--accent);
+      background: rgba(255,176,36,0.10);
+      color: var(--accent);
     }
+    .vol-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+    /* Amber-filled slot with knurled brass thumb */
     .vol-slider-wrap {
       flex: 1;
+      max-width: 380px;
       position: relative;
-      height: 4px;
-      max-width: 400px;
     }
 
     input[type=range].vol-slider {
       -webkit-appearance: none;
       width: 100%;
-      height: 4px;
-      border-radius: 2px;
-      background: linear-gradient(to right, var(--orange) 0%, var(--orange) var(--vol-pct), rgba(255,255,255,0.06) var(--vol-pct), rgba(255,255,255,0.06) 100%);
+      height: 6px;
+      border-radius: 3px;
+      background:
+        linear-gradient(
+          to right,
+          var(--accent) 0%,
+          var(--accent) var(--vol-pct, 80%),
+          var(--surface-raised) var(--vol-pct, 80%),
+          var(--surface-raised) 100%
+        );
       outline: none;
       cursor: pointer;
     }
     input[type=range].vol-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      background: var(--orange);
+      background:
+        radial-gradient(circle at 40% 35%, #FFD580, var(--accent) 70%);
       cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 10px var(--accent-glow);
       transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 0 10px var(--orange-glow);
+      /* Knurl hint: thin ring */
+      outline: 1px solid rgba(255,176,36,0.4);
     }
     input[type=range].vol-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.3);
-      box-shadow: 0 0 20px var(--orange-glow);
+      transform: scale(1.25);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5), 0 0 18px var(--accent-glow);
     }
     input[type=range].vol-slider::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      background: var(--orange);
+      background: var(--accent);
       cursor: pointer;
-      border: none;
-      box-shadow: 0 0 10px var(--orange-glow);
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    input[type=range].vol-slider:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 4px;
     }
 
     .vol-number {
-      width: 38px;
+      width: 36px;
       text-align: right;
+      font-family: 'Libre Franklin', sans-serif;
       font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
       flex-shrink: 0;
+    }
+
+    /* Red enamel STOP tag */
+    .vol-stop-btn {
+      padding: 7px 16px;
+      background: transparent;
+      border: 1px solid rgba(232,68,46,0.35);
+      border-radius: 20px;
+      color: var(--stop-red);
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .vol-stop-btn:hover {
+      background: rgba(232,68,46,0.10);
+      border-color: var(--stop-red);
+      box-shadow: 0 0 10px var(--stop-glow);
+    }
+    .vol-stop-btn:focus-visible { outline: 2px solid var(--stop-red); outline-offset: 2px; }
+
+    /* ════════════════════════════════════
+       PAGINATION — Enamel chevron tags
+    ════════════════════════════════════ */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 4px 0 36px;
+    }
+
+    .page-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--hairline-strong);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(255,176,36,0.08);
+      color: var(--accent);
+    }
+    .page-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .page-btn:disabled { opacity: 0.22; cursor: default; }
+
+    .page-indicator {
+      font-family: 'Rye', serif;
+      font-size: 13px;
+      color: var(--faint);
+      min-width: 90px;
+      text-align: center;
       font-variant-numeric: tabular-nums;
     }
 
-    .vol-stop-btn {
-      padding: 7px 18px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      color: var(--text-muted);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: all 0.25s ease;
+    /* ════════════════════════════════════
+       EMPTY STATE
+    ════════════════════════════════════ */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--faint);
+      grid-column: 1 / -1;
     }
-    .vol-stop-btn:hover {
-      border-color: #e04040;
-      color: #e04040;
-      background: rgba(224,64,64,0.06);
+    .empty-state p {
+      font-size: 14px;
+      line-height: 1.65;
+      font-family: 'Libre Franklin', sans-serif;
+      color: var(--muted);
     }
 
-    /* ── Modal ── */
+    /* ════════════════════════════════════
+       MODAL — City add
+    ════════════════════════════════════ */
     .modal-overlay {
       display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      position: fixed;
+      inset: 0;
+      background: rgba(20,16,12,0.82);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       z-index: 500;
       align-items: center;
       justify-content: center;
     }
     .modal-overlay.open { display: flex; }
+
     .modal {
-      background: var(--surface-solid);
-      border: 1px solid var(--border);
+      background: var(--surface);
+      border: 1px solid var(--hairline-strong);
       border-radius: var(--radius-lg);
-      padding: 32px 28px;
-      width: 380px;
-      max-width: 90vw;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-      animation: modalIn 0.3s ease;
+      padding: 30px 26px;
+      width: 360px;
+      max-width: 92vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      animation: modalIn 0.25s ease;
     }
     @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.95) translateY(10px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
     }
+
     .modal h3 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px;
-      letter-spacing: 1.5px;
-      margin-bottom: 18px;
+      font-family: 'Rye', serif;
+      font-size: 20px;
+      color: var(--text);
+      margin-bottom: 16px;
     }
+
     .modal input {
       width: 100%;
-      background: rgba(10,10,14,0.6);
-      border: 1px solid var(--border);
+      background: var(--bg-deep);
+      border: 1px solid var(--hairline-strong);
       border-radius: 10px;
-      padding: 11px 16px;
+      padding: 10px 14px;
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 13px;
       outline: none;
       margin-bottom: 18px;
-      transition: border-color 0.25s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .modal input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,66,10,0.1); }
-    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,176,36,0.14);
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
     .modal-btns button {
       padding: 9px 20px;
       border-radius: 10px;
       border: none;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.18s ease;
+      letter-spacing: 0.3px;
     }
-    .modal-cancel {
-      background: rgba(255,255,255,0.04);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-    }
-    .modal-cancel:hover { border-color: var(--border-hover); color: var(--text); }
-    .modal-save {
-      background: linear-gradient(135deg, var(--orange), #c23508);
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(232,66,10,0.2);
-    }
-    .modal-save:hover { box-shadow: 0 6px 24px rgba(232,66,10,0.3); }
+    .modal-btns button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    /* ── Toast ── */
+    .modal-cancel {
+      background: rgba(251,241,223,0.04);
+      color: var(--muted);
+      border: 1px solid var(--hairline-strong) !important;
+    }
+    .modal-cancel:hover { color: var(--text); }
+
+    .modal-save {
+      background: var(--accent);
+      color: var(--bg-deep);
+      box-shadow: 0 3px 12px rgba(255,176,36,0.25);
+    }
+    .modal-save:hover { box-shadow: 0 5px 18px rgba(255,176,36,0.35); }
+
+    /* ════════════════════════════════════
+       TOAST
+    ════════════════════════════════════ */
     .toast {
       position: fixed;
-      bottom: 84px;
-      right: 24px;
-      background: var(--surface-solid);
-      border: 1px solid var(--border);
+      bottom: 88px;
+      right: 20px;
+      background: var(--surface-raised);
+      border: 1px solid var(--hairline-strong);
       border-radius: 10px;
-      padding: 12px 18px;
-      font-size: 13px;
-      font-weight: 500;
+      padding: 11px 16px;
+      font-family: 'Libre Franklin', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
       color: var(--text);
       opacity: 0;
-      transform: translateY(8px) scale(0.96);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateY(6px) scale(0.97);
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
       z-index: 300;
       pointer-events: none;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.5);
     }
-    .toast.show { opacity: 1; transform: translateY(0) scale(1); }
-    .toast.success { border-color: var(--orange); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(232,66,10,0.1); }
-
-    /* ── Pagination ── */
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      margin: 8px 0 32px;
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
-    .page-btn {
-      width: 38px; height: 38px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.02);
-      color: var(--text);
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s ease;
-    }
-    .page-btn:hover:not(:disabled) {
-      border-color: var(--orange);
-      background: var(--orange-dim);
-      box-shadow: 0 0 12px rgba(232,66,10,0.1);
-    }
-    .page-btn:disabled { opacity: 0.2; cursor: default; }
-    .page-indicator { font-size: 13px; color: var(--text-dim); min-width: 80px; text-align: center; }
-
-    /* ── Empty state ── */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-dim);
-    }
-    .empty-state p {
-      font-size: 15px;
-      margin-top: 8px;
-      line-height: 1.6;
+    .toast.success {
+      border-color: var(--accent);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 14px rgba(255,176,36,0.12);
     }
 
-    /* ── Responsive ── */
+    /* ════════════════════════════════════
+       WIDE / KIOSK  (>=1100px)
+    ════════════════════════════════════ */
+    @media (min-width: 1100px) {
+      .logo-line1 { font-size: 28px; }
+      .logo-line2 { font-size: 18px; }
+      .station-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      }
+      .now-playing-hero {
+        padding: 18px 32px 20px;
+        min-height: 80px;
+      }
+      .ticker-inner { font-size: 24px; }
+    }
+
+    /* ════════════════════════════════════
+       MOBILE  (<=600px)
+    ════════════════════════════════════ */
     @media (max-width: 600px) {
-      .logo { font-size: 22px; }
+      .logo-line1 { font-size: 17px; }
+      .logo-line2 { font-size: 11px; letter-spacing: 2px; }
+      .logo-tag   { display: none; }
       .header-btns .btn-pill span { display: none; }
+      .header-btns .btn-pill { padding: 7px 12px; }
       .vol-label { display: none; }
-      main { padding: 18px 14px; }
-      .station-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-      .station-card { padding: 14px; }
-      .card-name { font-size: 19px; }
+      .vol-icon  { display: none; }
+      main { padding: 16px 12px; }
+      .station-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+      }
+      .station-card { padding: 14px 14px 12px; }
+      .card-name { font-size: 16px; }
       .search-results { grid-template-columns: 1fr; }
+      .search-section h2 { font-size: 20px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Header -->
+<!-- ═══ HEADER ═══ -->
 <header>
-  <div class="logo">Oasis<span> Radio</span></div>
-
-  <div class="now-playing-ticker">
-    <div class="eq-mini" id="eqMini">
-      <span style="height:8px"></span>
-      <span style="height:12px"></span>
-      <span style="height:5px"></span>
-      <span style="height:10px"></span>
+  <div class="header-rail" aria-hidden="true"></div>
+  <div class="header-inner">
+    <div class="logo" aria-label="Just Wingin' It Homestead Radio">
+      <span class="logo-line1" aria-hidden="true">Just Wingin' It</span>
+      <span class="logo-line2" aria-hidden="true">Homestead</span>
+      <span class="logo-tag" aria-hidden="true">Radio</span>
     </div>
-    <div class="ticker-inner" id="tickerText">Nothing playing</div>
-  </div>
 
-  <div class="header-btns">
-    <a class="btn-pill" href="/mapper.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-      <span>Deck</span>
-    </a>
-    <a class="btn-pill" href="http://192.168.2.89:32500" target="_blank">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
-      <span>Plexamp</span>
-    </a>
+    <div class="header-btns">
+      <a class="btn-pill" href="/mapper.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Deck</span>
+      </a>
+      <a class="btn-pill" href="http://192.168.2.89:32500" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+        <span>Plexamp</span>
+      </a>
+    </div>
   </div>
 </header>
 
-<!-- City tabs -->
-<div class="city-bar" id="cityBar">
-  <div class="city-tab active" data-city="All">All</div>
-  <div class="city-tab-add" id="addCityBtn" title="Add city">+</div>
+<!-- ═══ NOW-PLAYING HERO ═══ -->
+<div class="now-playing-hero" id="nowPlayingHero" role="status" aria-live="polite" aria-label="Now playing">
+  <div class="hero-bulb-border" aria-hidden="true"></div>
+  <span class="on-air-badge" aria-hidden="true">ON AIR</span>
+  <div class="eq-mini" id="eqMini" aria-hidden="true">
+    <span style="height:8px"></span>
+    <span style="height:12px"></span>
+    <span style="height:5px"></span>
+    <span style="height:10px"></span>
+  </div>
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="tickerText">Nothing playing</div>
+  </div>
 </div>
 
-<!-- Main -->
+<!-- ═══ CITY TAB BAR ═══ -->
+<div class="city-bar" id="cityBar" role="tablist" aria-label="Filter by city">
+  <div class="city-tab active" data-city="All" role="tab" aria-selected="true" tabindex="0">All</div>
+  <div class="city-tab-add" id="addCityBtn" title="Add city" role="button" tabindex="0" aria-label="Add city">+</div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
 <main>
   <!-- Station grid -->
   <div class="station-grid" id="stationGrid"></div>
 
   <!-- Pagination -->
-  <div class="pagination" id="pagination">
-    <button class="page-btn" id="prevPage">&#8592;</button>
-    <span class="page-indicator" id="pageIndicator">Page 1 of 1</span>
-    <button class="page-btn" id="nextPage">&#8594;</button>
-  </div>
+  <nav class="pagination" id="pagination" aria-label="Station pages">
+    <button class="page-btn" id="prevPage" aria-label="Previous page">&#8592;</button>
+    <span class="page-indicator" id="pageIndicator">Page 1 / 1</span>
+    <button class="page-btn" id="nextPage" aria-label="Next page">&#8594;</button>
+  </nav>
 
-  <!-- Search -->
-  <div class="search-section">
-    <h2>Find Stations</h2>
+  <!-- Search section -->
+  <section class="search-section" aria-labelledby="searchHeading">
+    <h2 id="searchHeading">Find More Signs</h2>
 
     <!-- Source tabs -->
-    <div class="search-tabs">
-      <button class="search-tab-btn active" data-pane="all">All</button>
-      <button class="search-tab-btn" data-pane="radiobrowser">Radio Browser</button>
-      <button class="search-tab-btn" data-pane="somafm">SomaFM</button>
-      <button class="search-tab-btn" data-pane="radiogarden">Radio Garden</button>
-      <button class="search-tab-btn sxm-tab" data-pane="siriusxm">SiriusXM</button>
+    <div class="search-tabs" role="tablist" aria-label="Search source">
+      <button class="search-tab-btn active" data-pane="all" role="tab" aria-selected="true" aria-controls="pane-all">All</button>
+      <button class="search-tab-btn" data-pane="radiobrowser" role="tab" aria-selected="false" aria-controls="pane-radiobrowser">Radio Browser</button>
+      <button class="search-tab-btn" data-pane="somafm" role="tab" aria-selected="false" aria-controls="pane-somafm">SomaFM</button>
+      <button class="search-tab-btn" data-pane="radiogarden" role="tab" aria-selected="false" aria-controls="pane-radiogarden">Radio Garden</button>
+      <button class="search-tab-btn sxm-tab" data-pane="siriusxm" role="tab" aria-selected="false" aria-controls="pane-siriusxm">SiriusXM</button>
     </div>
 
     <!-- All sources pane (htmx) -->
-    <div class="search-pane active" id="pane-all">
+    <div class="search-pane active" id="pane-all" role="tabpanel">
       <form class="search-row" hx-get="/partials/search" hx-target="#searchResults" hx-swap="innerHTML"
             hx-indicator="#searchResults">
         <input type="hidden" name="source" value="all" />
-        <input class="search-input" name="q" id="searchInput" type="text" placeholder="Search station name..." />
-        <input class="search-input" name="city" id="searchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
+        <input class="search-input" name="q" id="searchInput" type="search" placeholder="Search station name…" aria-label="Station name" />
+        <input class="search-input" name="city" id="searchCity" type="text" placeholder="City / state (optional)" aria-label="City or state" style="max-width:180px" />
         <button class="search-btn" type="submit" id="searchBtn">Search</button>
       </form>
-      <div class="search-results" id="searchResults"></div>
+      <div class="search-results" id="searchResults" role="list" aria-label="Search results"></div>
     </div>
 
     <!-- Radio Browser pane (htmx) -->
-    <div class="search-pane" id="pane-radiobrowser">
+    <div class="search-pane" id="pane-radiobrowser" role="tabpanel">
       <form class="search-row" hx-get="/partials/search" hx-target="#rbSearchResults" hx-swap="innerHTML">
         <input type="hidden" name="source" value="radiobrowser" />
-        <input class="search-input" name="q" id="rbSearchInput" type="text" placeholder="Search station name..." />
-        <input class="search-input" name="city" id="rbSearchCity" type="text" placeholder="City / state (optional)" style="max-width:180px" />
+        <input class="search-input" name="q" id="rbSearchInput" type="search" placeholder="Search station name…" aria-label="Station name" />
+        <input class="search-input" name="city" id="rbSearchCity" type="text" placeholder="City / state (optional)" aria-label="City or state" style="max-width:180px" />
         <button class="search-btn" type="submit" id="rbSearchBtn">Search</button>
       </form>
-      <div class="search-results" id="rbSearchResults"></div>
+      <div class="search-results" id="rbSearchResults" role="list" aria-label="Radio Browser results"></div>
     </div>
 
     <!-- SomaFM pane (htmx) -->
-    <div class="search-pane" id="pane-somafm">
-      <div style="margin-bottom:12px;font-size:13px;color:var(--text-muted)">Curated internet radio channels from SomaFM</div>
-      <div class="search-results" id="somaResults"
+    <div class="search-pane" id="pane-somafm" role="tabpanel">
+      <p class="soma-note">Curated internet radio channels from SomaFM</p>
+      <div class="search-results" id="somaResults" role="list" aria-label="SomaFM channels"
            hx-get="/partials/somafm"
            hx-trigger="intersect once"
            hx-indicator="#somaSpinner">
-        <div id="somaSpinner" style="color:var(--text-dim);font-size:13px;grid-column:1/-1;padding:10px 0">Loading SomaFM channels...</div>
+        <div id="somaSpinner" style="color:var(--faint);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:'Libre Franklin',sans-serif">Loading SomaFM channels…</div>
       </div>
     </div>
 
     <!-- Radio Garden pane (htmx) -->
-    <div class="search-pane" id="pane-radiogarden">
+    <div class="search-pane" id="pane-radiogarden" role="tabpanel">
       <form class="search-row" hx-get="/partials/search" hx-target="#rgSearchResults" hx-swap="innerHTML">
         <input type="hidden" name="source" value="radiogarden" />
-        <input class="search-input" name="q" id="rgSearchInput" type="text" placeholder="Search Radio Garden..." />
+        <input class="search-input" name="q" id="rgSearchInput" type="search" placeholder="Search Radio Garden…" aria-label="Radio Garden search" />
         <button class="search-btn" type="submit" id="rgSearchBtn">Search</button>
       </form>
-      <div class="search-results" id="rgSearchResults"></div>
+      <div class="search-results" id="rgSearchResults" role="list" aria-label="Radio Garden results"></div>
     </div>
 
     <!-- SiriusXM pane -->
-    <div class="search-pane" id="pane-siriusxm">
+    <div class="search-pane" id="pane-siriusxm" role="tabpanel">
       <div id="sxmLoginSection">
         <div class="sxm-login-card">
-          <h3>SiriusXM</h3>
+          <h3>Backstage Pass</h3>
           <p>Sign in with your SiriusXM account to browse channels.</p>
-          <input class="sxm-input" id="sxmUsername" type="text" placeholder="Username / Email" autocomplete="username" />
-          <input class="sxm-input" id="sxmPassword" type="password" placeholder="Password" autocomplete="current-password" />
+          <label for="sxmUsername" style="display:none">Username or Email</label>
+          <input class="sxm-input" id="sxmUsername" type="text" placeholder="Username / Email" autocomplete="username" aria-label="SiriusXM username or email" />
+          <label for="sxmPassword" style="display:none">Password</label>
+          <input class="sxm-input" id="sxmPassword" type="password" placeholder="Password" autocomplete="current-password" aria-label="SiriusXM password" />
           <button class="sxm-login-btn" id="sxmLoginBtn">
             <span id="sxmLoginLabel">Sign In</span>
           </button>
-          <div class="sxm-error" id="sxmLoginError"></div>
+          <div class="sxm-error" id="sxmLoginError" role="alert"></div>
         </div>
       </div>
 
@@ -1066,32 +1521,35 @@
           <div class="sxm-user-info">Signed in as <strong id="sxmUsernameDisplay"></strong></div>
           <button class="sxm-logout-btn" id="sxmLogoutBtn">Sign Out</button>
         </div>
-        <div class="search-results" id="sxmChannelResults"></div>
+        <div class="search-results" id="sxmChannelResults" role="list" aria-label="SiriusXM channels"></div>
       </div>
     </div>
 
-  </div>
+  </section>
 </main>
 
-<!-- Volume bar -->
-<div class="volume-bar">
-  <div class="vol-label">Volume</div>
-  <svg class="vol-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+<!-- ═══ VOLUME BAR (fixed bottom) ═══ -->
+<div class="volume-bar" role="region" aria-label="Volume control">
+  <div class="vol-label" aria-hidden="true">Volume</div>
+  <svg class="vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
     <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
   </svg>
-  <button class="vol-btn" id="volDown">&minus;</button>
-  <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" style="--vol-pct:80%" />
-  <button class="vol-btn" id="volUp">+</button>
-  <span class="vol-number" id="volNumber">80</span>
-  <button class="vol-stop-btn" id="stopBtn">&#9646; Stop</button>
+  <button class="vol-btn" id="volDown" aria-label="Volume down">&minus;</button>
+  <div class="vol-slider-wrap">
+    <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" style="--vol-pct:80%" aria-label="Volume" />
+  </div>
+  <button class="vol-btn" id="volUp" aria-label="Volume up">+</button>
+  <span class="vol-number" id="volNumber" aria-live="polite" aria-atomic="true">80</span>
+  <button class="vol-stop-btn" id="stopBtn" aria-label="Stop playback">&#9646; Stop</button>
 </div>
 
-<!-- Add city modal -->
-<div class="modal-overlay" id="cityModal">
+<!-- ═══ ADD CITY MODAL ═══ -->
+<div class="modal-overlay" id="cityModal" role="dialog" aria-modal="true" aria-labelledby="cityModalTitle">
   <div class="modal">
-    <h3>Add City</h3>
-    <input type="text" id="cityInput" placeholder="e.g. Memphis" />
+    <h3 id="cityModalTitle">Add City</h3>
+    <label for="cityInput" style="display:none">City name</label>
+    <input type="text" id="cityInput" placeholder="e.g. Memphis" aria-label="City name" />
     <div class="modal-btns">
       <button class="modal-cancel" id="cityCancelBtn">Cancel</button>
       <button class="modal-save" id="citySaveBtn">Add</button>
@@ -1099,8 +1557,8 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 // ── State ──
@@ -1167,6 +1625,7 @@ document.getElementById('stopBtn').addEventListener('click', async () => {
 function updateTicker(station) {
   const ticker = document.getElementById('tickerText');
   const eq = document.getElementById('eqMini');
+  const hero = document.getElementById('nowPlayingHero');
   ticker.onclick = null;
   ticker.style.cursor = '';
   ticker.style.color = '';
@@ -1174,10 +1633,12 @@ function updateTicker(station) {
     ticker.textContent = `${station.name}  —  ${station.slogan || station.genre}`;
     ticker.className = 'ticker-inner active';
     eq.className = 'eq-mini active';
+    hero.classList.add('playing');
   } else {
     ticker.textContent = 'Nothing playing';
     ticker.className = 'ticker-inner';
     eq.className = 'eq-mini';
+    hero.classList.remove('playing');
   }
 }
 
@@ -1185,11 +1646,13 @@ function updateTicker(station) {
 function showResume(station) {
   const ticker = document.getElementById('tickerText');
   const eq = document.getElementById('eqMini');
-  ticker.textContent = '\u25B6  Tap to resume ' + station.name;
+  const hero = document.getElementById('nowPlayingHero');
+  ticker.textContent = '▶  Tap to resume ' + station.name;
   ticker.className = 'ticker-inner';
   ticker.style.cursor = 'pointer';
   ticker.style.color = 'var(--accent, #5ad1ff)';
   eq.className = 'eq-mini';
+  hero.classList.remove('playing');
   ticker.onclick = () => playStation(station.id);
 }
 
@@ -1294,6 +1757,12 @@ function renderGrid() {
 
     const isSxm = station.source === 'siriusxm';
 
+    // Bulb border overlay (shown when .playing)
+    const bulbBorder = document.createElement('div');
+    bulbBorder.className = 'card-bulb-border';
+    bulbBorder.setAttribute('aria-hidden', 'true');
+    card.appendChild(bulbBorder);
+
     const cardTop = document.createElement('div');
     cardTop.className = 'card-top';
     const cardTopLeft = document.createElement('div');
@@ -1309,7 +1778,7 @@ function renderGrid() {
       cardTopLeft.appendChild(sxmBadge);
     }
     cardTop.appendChild(cardTopLeft);
-    cardTop.innerHTML += `<div class="eq-bars">
+    cardTop.innerHTML += `<div class="eq-bars" aria-hidden="true">
       <span style="height:8px"></span><span style="height:14px"></span>
       <span style="height:6px"></span><span style="height:11px"></span>
       <span style="height:9px"></span></div>`;
@@ -1330,6 +1799,7 @@ function renderGrid() {
     const playBtn = document.createElement('button');
     playBtn.className = 'play-btn';
     playBtn.title = station.id === currentStationId ? 'Stop' : 'Play';
+    playBtn.setAttribute('aria-label', station.id === currentStationId ? `Stop ${station.name}` : `Play ${station.name}`);
     playBtn.innerHTML = station.id === currentStationId
       ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
       : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
@@ -1479,7 +1949,8 @@ function buildResultCard(station, container) {
     const sxmPlayBtn = document.createElement('button');
     sxmPlayBtn.className = 'play-btn sxm-play-btn';
     sxmPlayBtn.title = isPlaying ? 'Stop' : 'Play';
-    sxmPlayBtn.style.cssText = 'width:32px;height:32px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px var(--sxm-glow)';
+    sxmPlayBtn.setAttribute('aria-label', isPlaying ? `Stop ${station.name}` : `Play ${station.name}`);
+    sxmPlayBtn.style.cssText = 'width:36px;height:36px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px var(--sxm-glow)';
     sxmPlayBtn.innerHTML = isPlaying
       ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
       : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
@@ -1549,22 +2020,22 @@ async function refreshSxmPane() {
 async function loadSxmChannels() {
   sxmChannelsLoaded = true;
   const container = document.getElementById('sxmChannelResults');
-  container.innerHTML = '<div style="color:var(--text-dim);font-size:13px;grid-column:1/-1;padding:10px 0">Loading channels...</div>';
+  container.innerHTML = '<div style="color:var(--faint);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:\'Libre Franklin\',sans-serif">Loading channels…</div>';
   try {
     const results = await fetch('/api/sxm/channels').then(r => r.json());
     container.innerHTML = '';
     if (results.error) {
-      container.innerHTML = `<div style="color:#e04040;font-size:13px;grid-column:1/-1;padding:10px 0">Error: ${results.error}</div>`;
+      container.innerHTML = `<div style="color:var(--stop-red);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:'Libre Franklin',sans-serif">Error: ${results.error}</div>`;
       return;
     }
     if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-dim);font-size:13px;grid-column:1/-1;padding:10px 0">No channels available.</div>';
+      container.innerHTML = '<div style="color:var(--faint);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:\'Libre Franklin\',sans-serif">No channels available.</div>';
       return;
     }
     results.forEach(s => buildResultCard(s, container));
   } catch(e) {
     sxmChannelsLoaded = false;
-    container.innerHTML = '<div style="color:#e04040;font-size:13px;grid-column:1/-1;padding:10px 0">Failed to load channels.</div>';
+    container.innerHTML = '<div style="color:var(--stop-red);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:\'Libre Franklin\',sans-serif">Failed to load channels.</div>';
   }
 }
 
