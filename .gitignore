@@ -1,5 +1,5 @@
 # Credentials
-app/siriusxm.json
+app/data/siriusxm.json
 
 # Python
 __pycache__/
@@ -20,3 +20,8 @@ Thumbs.db
 # app/stations.json
 # app/cities.json
 # app/streamdeck_layout.json
+
+# Session / tooling
+.claude/
+.playwright-mcp/
+*-mobile.png

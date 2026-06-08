@@ -3,6 +3,18 @@
 Self-hosted web radio dashboard with Stream Deck+ integration and mpv backend.
 Dark UI · drag-and-drop stations · multi-source search · htmx-powered.
 
+## Deployment (current)
+
+Runs on **docker01** (Proxmox VM) via `docker compose`. Audio plays out a PreSonus
+AudioBox USB 96 attached over the network with **VirtualHere CloudHub** (GL-MT300N
+"Mango"); the container's mpv targets the host PipeWire/PulseAudio sink. Public access at
+**radio.justwingingithomestead.com** via a **Cloudflare Tunnel** (`cloudflared` on docker01).
+The Stream Deck / kiosk pieces below are the original AcePC design and are optional.
+
+> Data files live in `app/data/` and are bind-mounted as a directory (`./app/data:/data`)
+> so the app's atomic writes work inside the container. `app/data/siriusxm.json` holds
+> SiriusXM credentials and is gitignored.
+
 ## Architecture
 
 ```

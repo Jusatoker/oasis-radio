@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   oasis-radio:
     build: .
@@ -8,11 +6,14 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./app/stations.json:/data/stations.json
-      - ./app/cities.json:/data/cities.json
-      - ./app/streamdeck_layout.json:/data/streamdeck_layout.json
-      - ./app/siriusxm.json:/data/siriusxm.json
-      # PulseAudio socket — host PA handles the USB audio device
+      # Mount the data DIRECTORY (not individual files). The app writes config
+      # atomically (os.replace rename); renaming over a single-file bind mount
+      # fails with EBUSY inside the container, which broke SXM login + station
+      # writes. A directory mount lets the atomic rename happen inside /data.
+      - ./app/data:/data
+      # PulseAudio/PipeWire socket — host audio handles the USB device.
+      # On docker01 the AudioBox USB 96 is attached over VirtualHere and shows
+      # up as the host's default sink; the container's mpv plays to it.
       - /run/user/1000/pulse:/run/user/1000/pulse
       - ~/.config/pulse/cookie:/root/.config/pulse/cookie:ro
     environment:
@@ -21,3 +22,9 @@ services:
       - STATIONS_FILE=/data/stations.json
       - CITIES_FILE=/data/cities.json
       - LAYOUT_FILE=/data/streamdeck_layout.json
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:5000/api/status'); sys.exit(0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
