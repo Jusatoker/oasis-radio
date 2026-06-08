@@ -25,3 +25,5 @@ Thumbs.db
 .claude/
 .playwright-mcp/
 *-mobile.png
+.venv-test/
+app/data/last_station.json

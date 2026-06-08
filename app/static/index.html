@@ -1167,6 +1167,9 @@ document.getElementById('stopBtn').addEventListener('click', async () => {
 function updateTicker(station) {
   const ticker = document.getElementById('tickerText');
   const eq = document.getElementById('eqMini');
+  ticker.onclick = null;
+  ticker.style.cursor = '';
+  ticker.style.color = '';
   if (station) {
     ticker.textContent = `${station.name}  —  ${station.slogan || station.genre}`;
     ticker.className = 'ticker-inner active';
@@ -1176,6 +1179,18 @@ function updateTicker(station) {
     ticker.className = 'ticker-inner';
     eq.className = 'eq-mini';
   }
+}
+
+// One-tap resume: when nothing is playing, offer the last-played station.
+function showResume(station) {
+  const ticker = document.getElementById('tickerText');
+  const eq = document.getElementById('eqMini');
+  ticker.textContent = '\u25B6  Tap to resume ' + station.name;
+  ticker.className = 'ticker-inner';
+  ticker.style.cursor = 'pointer';
+  ticker.style.color = 'var(--accent, #5ad1ff)';
+  eq.className = 'eq-mini';
+  ticker.onclick = () => playStation(station.id);
 }
 
 // ── Play / Stop ──
@@ -1622,7 +1637,7 @@ async function pollStatus() {
       updateTicker(s.station);
     } else {
       currentStationId = null;
-      updateTicker(null);
+      if (s.last) { showResume(s.last); } else { updateTicker(null); }
     }
     if (s.volume !== undefined && s.volume !== volume) {
       updateVolSlider(s.volume);

@@ -6,6 +6,8 @@ import tempfile
 import time
 import threading
 import signal
+import logging
+from urllib.parse import urlparse
 
 import requests
 from markupsafe import escape
@@ -13,9 +15,14 @@ from flask import Flask, request, jsonify, send_from_directory, make_response
 
 app = Flask(__name__, static_folder='static')
 
+# Surface server-side events (mpv spawn failures, bad URLs) rather than swallow them.
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+log = app.logger
+
 STATIONS_FILE = os.environ.get('STATIONS_FILE', '/data/stations.json')
 CITIES_FILE = os.environ.get('CITIES_FILE', '/data/cities.json')
 LAYOUT_FILE = os.environ.get('LAYOUT_FILE', '/data/streamdeck_layout.json')
+LAST_FILE = os.environ.get('LAST_FILE', '/data/last_station.json')
 SXM_CREDS_FILE = '/data/siriusxm.json'
 MPV_SOCKET = '/tmp/mpv-socket'
 
@@ -90,8 +97,14 @@ def _stop_mpv():
         pass
 
 
-def _start_mpv(url: str):
+def _start_mpv(url: str) -> bool:
     global _mpv_process
+
+    # Only ever hand mpv an http(s) stream URL (never file://, javascript:, etc.)
+    if urlparse(url or '').scheme.lower() not in ('http', 'https'):
+        log.warning('Refusing to play non-http(s) URL: %r', url)
+        return False
+
     _stop_mpv()
 
     env = os.environ.copy()
@@ -111,9 +124,16 @@ def _start_mpv(url: str):
     else:
         cmd += ['--ao=pulse']
     cmd.append(url)
-    _mpv_process = subprocess.Popen(cmd, env=env,
-                                    stdout=subprocess.DEVNULL,
-                                    stderr=subprocess.DEVNULL)
+    try:
+        _mpv_process = subprocess.Popen(cmd, env=env,
+                                        stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        log.error('mpv binary not found - cannot play audio (is mpv installed?)')
+        _mpv_process = None
+        return False
+    log.info('mpv playing %s (ao=%s)', url, audio_out)
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -334,8 +354,10 @@ def api_play():
             'city': data.get('city', 'SiriusXM'),
         }
         with _mpv_lock:
+            if not _start_mpv(station['url']):
+                return jsonify({'ok': False, 'error': 'Playback failed to start'})
             _current_station = station
-            _start_mpv(station['url'])
+            _save_json(LAST_FILE, station)
         return jsonify({'ok': True, 'station': station})
 
     stations = _load_json(STATIONS_FILE, [])
@@ -344,8 +366,10 @@ def api_play():
         return jsonify({'error': 'Station not found'}), 404
 
     with _mpv_lock:
+        if not _start_mpv(station['url']):
+            return jsonify({'ok': False, 'error': 'Playback failed to start'})
         _current_station = station
-        _start_mpv(station['url'])
+        _save_json(LAST_FILE, station)
 
     return jsonify({'ok': True, 'station': station})
 
@@ -379,6 +403,7 @@ def api_status():
         'playing': _current_station is not None,
         'station': _current_station,
         'volume': _current_volume,
+        'last': _load_json(LAST_FILE, None),
     })
 
 
