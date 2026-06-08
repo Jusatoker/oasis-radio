@@ -408,6 +408,100 @@ def api_status():
 
 
 # ---------------------------------------------------------------------------
+# API – Now Playing (live track + album art)
+# ---------------------------------------------------------------------------
+import re as _re
+
+_np_cache = {}
+
+def _read_icy(url, timeout=7):
+    try:
+        r = requests.get(url, headers={'Icy-MetaData': '1', 'User-Agent': 'iTunes/12'},
+                         stream=True, timeout=timeout)
+        mi = r.headers.get('icy-metaint')
+        if not mi:
+            r.close(); return None
+        mi = int(mi); r.raw.read(mi)
+        n = r.raw.read(1); ln = (n[0] if n else 0) * 16
+        meta = r.raw.read(ln).decode('utf-8', 'ignore'); r.close()
+        return meta
+    except Exception:
+        return None
+
+def _parse_icy(meta):
+    art = None
+    am = _re.search(r'amgArtworkURL="([^"]+)"', meta or '')
+    if am:
+        art = am.group(1)
+    st = _re.search(r"StreamTitle='([^']*)'", meta or '')
+    s = (st.group(1) if st else (meta or '')).strip()
+    tx = _re.search(r'text="([^"]*)"', s)
+    base = _re.sub(r'\s*[A-Za-z_]+="[^"]*"', '', s).strip(' -\t')
+    artist = song = None
+    if tx:
+        song = tx.group(1).strip()
+        artist = base or None
+        if artist and song and artist.lower() == song.lower():
+            artist = None
+    else:
+        parts = base.split(' - ', 1)
+        if len(parts) == 2:
+            artist, song = parts[0].strip(), parts[1].strip()
+        elif base:
+            song = base
+    def junky(x):
+        return bool(x) and ('="' in x or 'song_spot' in x.lower() or 'mediabaseid' in x.lower() or 'spotinstance' in x.lower())
+    if junky(song): song = None
+    if junky(artist): artist = None
+    return artist, song, art
+
+def _itunes_art(query):
+    try:
+        r = requests.get('https://itunes.apple.com/search',
+                         params={'term': query, 'entity': 'song', 'limit': 1}, timeout=6).json()
+        if r.get('results'):
+            a = r['results'][0]
+            return (a['artworkUrl100'].replace('100x100', '600x600'),
+                    a.get('artistName'), a.get('trackName'))
+    except Exception:
+        pass
+    return None, None, None
+
+@app.route('/api/nowplaying')
+def api_nowplaying():
+    sid = request.args.get('id')
+    st = None
+    if sid:
+        st = next((s for s in _load_json(STATIONS_FILE, []) if s.get('id') == sid), None)
+    if st is None:
+        st = _current_station
+    if not st or not st.get('url'):
+        return jsonify({'playing': False})
+    url = st['url']
+    now = time.time()
+    cached = _np_cache.get(url)
+    if cached and now - cached[0] < 12:
+        return jsonify(cached[1])
+    artist = song = art = None
+    meta = _read_icy(url)
+    if meta:
+        artist, song, art = _parse_icy(meta)
+    track = bool(artist and song)
+    if track:
+        ia, ar2, tr2 = _itunes_art((artist + ' ' + song).strip())
+        if ia:
+            art = ia; artist = ar2 or artist; song = tr2 or song
+        elif art and 'iheart' in art:
+            art = _re.sub(r'fit\(\d+,\d+\)', 'fit(600,600)', art)
+    else:
+        artist = song = art = None
+    data = {'playing': True, 'station': st.get('name'), 'color': st.get('color'),
+            'artist': artist, 'song': song, 'art': art, 'track': track}
+    _np_cache[url] = (now, data)
+    return jsonify(data)
+
+
+# ---------------------------------------------------------------------------
 # API – SiriusXM
 # ---------------------------------------------------------------------------
 

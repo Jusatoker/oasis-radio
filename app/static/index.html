@@ -1,1098 +1,418 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Just Wingin' It Homestead — Radio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Yellowtail&family=Rye&family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
-  <style>
-    /* ============================================================
-       LOWER BROADWAY, 1 A.M.  —  neon-noir honky-tonk
-       ============================================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Just Wingin' It Homestead — Radio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Monoton&family=Yellowtail&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080608; --panel:rgba(20,16,22,.66); --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+  --bone:#f6eee0; --dim:#b9aфb;--dim:#b6aa9c; --faint:#7e7468;
+  --amber:#ffb12e; --pink:#ff2e88; --cyan:#2ff4e4; --blue:#4f86ff; --red:#ff5a3c; --green:#54f08a;
+  --c:#ffb12e; /* current accent, set from now-playing color */
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+html,body{height:100%}
+body{
+  font-family:'DM Sans',system-ui,sans-serif; color:var(--bone); background:var(--bg);
+  min-height:100vh; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  display:flex; flex-direction:column;
+}
+/* ambient color-bloom backdrop (the album art, blurred, behind everything) */
+#bloom{position:fixed; inset:-10% -10% -10% -10%; z-index:0; pointer-events:none; opacity:0; transition:opacity 1s ease, background-image .6s ease;
+  background-size:cover; background-position:center; filter:blur(80px) saturate(1.5) brightness(.55); transform:scale(1.25);}
+#bloom.on{opacity:.85}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(130% 110% at 50% 18%, transparent 38%, rgba(4,3,5,.72) 100%);}
+#grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.045;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.wrap{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;width:100%;}
 
-    :root {
-      /* night scene */
-      --night-1:#0b0712; --night-2:#140a14; --night-3:#1a0d0b; --street:#0a0608;
-      --brick:#241310; --mortar:rgba(0,0,0,.5);
-      --bone:#fdf4e6; --bone-dim:#cdbfa8; --bone-faint:#9a8f7e;
-      /* neon tubes */
-      --pink:#ff2e88; --cyan:#2ff4e4; --amber:#ffb12e; --blue:#4f86ff;
-      --green:#57f08a; --violet:#c06bff; --red:#ff5638;
-      --accent:#ffb12e;            /* JS fallback var(--accent) -> amber, not cyan */
-      --sxm-blue:#4f86ff;
-      --hairline:rgba(253,244,230,.10); --hairline-2:rgba(253,244,230,.18);
-      --radius:16px;
-      --ease:cubic-bezier(.22,.61,.36,1);
-    }
+/* ---------- top bar ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;}
+.brand{line-height:.86;}
+.brand .a{font-family:'Yellowtail',cursive;font-size:22px;color:#fff;display:block;transform:rotate(-3deg);
+  text-shadow:0 0 1px #fff,0 0 6px var(--pink),0 0 18px var(--pink);}
+.brand .b{font-family:'Monoton',cursive;font-size:22px;letter-spacing:1px;color:#fff;display:block;
+  text-shadow:0 0 1px #fff,0 0 7px var(--amber),0 0 20px var(--amber);}
+.top-actions{display:flex;gap:10px;align-items:center}
+.icon-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;cursor:pointer;
+  font:600 12px 'DM Sans';color:var(--dim);background:var(--panel);border:1px solid var(--line);text-decoration:none;
+  backdrop-filter:blur(12px);transition:.16s var(--ease);}
+.icon-btn:hover{color:#fff;border-color:var(--line2)}
+.icon-btn svg{width:15px;height:15px}
 
-    @keyframes flickerOn{
-      0%{opacity:0;filter:brightness(.2)} 8%{opacity:1;filter:brightness(1.6)}
-      10%{opacity:.3} 13%{opacity:1} 16%{opacity:.5} 19%{opacity:1}
-      22%{opacity:.85} 25%{opacity:1;filter:brightness(1)} 100%{opacity:1;filter:brightness(1)}
-    }
-    @keyframes buzz{ 0%,97%,100%{opacity:1} 98%{opacity:.78} 99%{opacity:.92} }
-    @keyframes bulbTwinkle{ 0%,100%{opacity:.95} 50%{opacity:.55} }
-    @keyframes chase{ to{ background-position: 220px 0, 220px 0; } }
-    @keyframes grain{ 0%,100%{transform:translate(0,0)} 50%{transform:translate(-3%,2%)} }
+/* ---------- STAGE (now playing) ---------- */
+.stage{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:46px;align-items:center;
+  padding:26px 40px 36px;max-width:1180px;margin:0 auto;width:100%;}
+.cover{position:relative;width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;
+  background:linear-gradient(135deg,#2a2030,#15101a);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06), 0 0 80px -20px var(--c);
+  transition:box-shadow .6s ease;}
+.cover img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .6s ease;}
+.cover img.show{opacity:1}
+.cover .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--faint);font:700 13px 'DM Mono';letter-spacing:2px}
+.cover .spin{position:absolute;inset:0;border-radius:20px;}
+.stage.playing .cover{animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
-    html,body{height:100%;}
-    body{
-      min-height:100vh; color:var(--bone);
-      font-family:'Libre Franklin',system-ui,sans-serif; font-size:14px;
-      -webkit-font-smoothing:antialiased; padding-bottom:96px; position:relative;
-      background:
-        radial-gradient(120% 80% at 18% -10%, rgba(255,46,136,.16), transparent 42%),
-        radial-gradient(120% 80% at 88% -6%, rgba(47,244,228,.13), transparent 44%),
-        radial-gradient(140% 90% at 50% 118%, rgba(255,177,46,.16), transparent 50%),
-        linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 38%, var(--night-3) 72%, var(--street) 100%);
-      background-attachment:fixed;
-    }
-    /* brick wall + grain */
-    body::before{
-      content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
-      background:
-        repeating-linear-gradient(0deg, transparent 0 38px, var(--mortar) 38px 40px),
-        repeating-linear-gradient(90deg, transparent 0 88px, var(--mortar) 88px 90px),
-        linear-gradient(180deg, transparent, rgba(0,0,0,.0));
-      mix-blend-mode:multiply; mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.25));
-    }
-    body::after{ /* film grain + vignette */
-      content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-      background:
-        radial-gradient(130% 120% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%);
-      opacity:.9;
-    }
-    .grain{
-      position:fixed; inset:-20%; z-index:1; pointer-events:none; opacity:.05;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      animation:grain 8s steps(6) infinite; mix-blend-mode:overlay;
-    }
-    body > *{ position:relative; z-index:2; }
+.np{min-width:0}
+.np .eyebrow{display:inline-flex;align-items:center;gap:9px;font:600 11px 'DM Mono';letter-spacing:2.4px;
+  text-transform:uppercase;color:var(--c);text-shadow:0 0 12px color-mix(in srgb,var(--c) 60%,transparent);margin-bottom:14px}
+.np .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.np .song{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(34px,5.4vw,68px);
+  line-height:.98;letter-spacing:-.02em;color:#fff;text-wrap:balance;margin-bottom:8px;
+  text-shadow:0 2px 30px rgba(0,0,0,.5);transition:.4s var(--ease)}
+.np .artist{font-family:'Bricolage Grotesque',sans-serif;font-weight:500;font-size:clamp(17px,2.2vw,24px);
+  color:var(--bone);opacity:.9;margin-bottom:22px}
+.np .station-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;
+  font:600 12px 'DM Sans';color:var(--bone);background:var(--panel);border:1px solid var(--line2);backdrop-filter:blur(10px)}
 
-    /* ---------- HEADER : marquee band + bulb string ---------- */
-    header{
-      display:flex; align-items:center; gap:18px; padding:18px 26px 26px;
-      position:relative;
-    }
-    header::after{ /* strung bulbs swagging under the header */
-      content:""; position:absolute; left:0; right:0; bottom:6px; height:14px;
-      background:
-        radial-gradient(circle at center, #ffd98a 0 2.6px, rgba(255,177,46,.5) 2.6px 4px, transparent 4.4px) 0 0/26px 14px repeat-x;
-      filter:drop-shadow(0 0 5px rgba(255,177,46,.85)) drop-shadow(0 0 12px rgba(255,120,40,.5));
-      animation:bulbTwinkle 2.6s ease-in-out infinite; opacity:.95;
-    }
+/* visualizer */
+.viz{display:flex;align-items:flex-end;gap:4px;height:34px;margin:22px 0}
+.viz span{width:5px;border-radius:3px;background:linear-gradient(180deg,#fff,var(--c));
+  box-shadow:0 0 8px var(--c);height:8px;animation:viz 1s ease-in-out infinite alternate}
+.stage:not(.playing) .viz{display:none}
 
-    .logo{ display:flex; flex-direction:column; line-height:.92; flex-shrink:0; }
-    .logo span{ display:block; }
-    /* "Just Wingin' It" — neon script */
-    .logo span:nth-child(1){
-      font-family:'Yellowtail',cursive; font-size:34px; color:#fff; transform:rotate(-3deg) translateX(6px);
-      text-shadow:0 0 1px #fff,0 0 5px var(--pink),0 0 14px var(--pink),0 0 30px var(--pink),0 0 60px rgba(255,46,136,.7);
-      animation:flickerOn 1.6s var(--ease) both, buzz 7s 1.6s infinite;
-    }
-    /* "HOMESTEAD" — neon tube block */
-    .logo span:nth-child(2){
-      font-family:'Monoton',cursive; font-size:42px; letter-spacing:2px; color:#fff; margin-top:2px;
-      text-shadow:0 0 1px #fff,0 0 6px var(--amber),0 0 16px var(--amber),0 0 34px var(--amber),0 0 70px rgba(255,150,30,.6);
-      animation:flickerOn 2s .15s var(--ease) both;
-    }
-    .logo span:nth-child(3){
-      font-family:'Libre Franklin',sans-serif; font-weight:700; font-size:12px; letter-spacing:7px;
-      color:var(--cyan); margin-top:4px; text-shadow:0 0 6px var(--cyan),0 0 16px rgba(47,244,228,.6);
-    }
+/* actions */
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:14px 22px;border-radius:14px;cursor:pointer;border:none;
+  font:700 14px 'DM Sans';letter-spacing:.2px;transition:.16s var(--ease)}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:#fff;color:#120b10;box-shadow:0 8px 30px -8px rgba(255,255,255,.4)}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-ghost{background:var(--panel);color:var(--bone);border:1px solid var(--line2);backdrop-filter:blur(10px)}
+.btn-ghost:hover{border-color:#fff;color:#fff}
+.btn-stop{background:transparent;border:1.5px solid color-mix(in srgb,var(--red) 60%,transparent);color:#ff8a73}
+.btn-stop:hover{border-color:var(--red);color:#fff}
 
-    .now-playing-ticker, #nowPlayingHero{ flex:1; min-width:0; }
-    .header-btns{ display:flex; gap:10px; flex-shrink:0; }
-    .btn-pill{
-      display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:999px;
-      font:600 12px/1 'Libre Franklin'; letter-spacing:.4px; text-decoration:none; color:var(--bone-dim);
-      background:rgba(20,12,16,.6); border:1px solid var(--hairline-2);
-      transition:all .18s var(--ease);
-    }
-    .btn-pill svg{ width:15px; height:15px; }
-    .btn-pill:hover{ color:#fff; border-color:var(--amber); box-shadow:0 0 14px rgba(255,177,46,.4); }
+.idle-hint{font:500 15px 'DM Sans';color:var(--faint);margin-top:18px}
 
-    /* ---------- NOW-PLAYING HERO : the marquee ---------- */
-    #nowPlayingHero{ flex:initial; }
-    .ticker-inner, #tickerText{
-      font-family:'Rye',serif; font-size:22px; letter-spacing:.3px; color:var(--bone-dim);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:.3s;
-    }
-    .ticker-inner.active, #tickerText.active{
-      color:#fff; text-shadow:0 0 2px #fff,0 0 10px var(--amber),0 0 26px var(--amber);
-    }
-    #tickerText[style*="cursor"]{ color:var(--amber); text-shadow:0 0 8px rgba(255,177,46,.6); }
-    .eq-mini{ display:none; gap:3px; align-items:flex-end; height:18px; }
-    .eq-mini.active{ display:inline-flex; }
-    .eq-mini span{ width:3px; background:var(--amber); box-shadow:0 0 6px var(--amber); border-radius:2px;
-      animation:eqb .9s ease-in-out infinite alternate; }
-    @keyframes eqb{ from{height:4px} to{height:18px} }
+/* ---------- PICKER (the dial / crate) ---------- */
+.picker-wrap{margin-top:auto;padding:18px 0 26px}
+.picker-head{display:flex;align-items:center;justify-content:space-between;padding:0 24px 12px;max-width:1180px;margin:0 auto;width:100%}
+.picker-head h2{font:600 12px 'DM Mono';letter-spacing:2.6px;text-transform:uppercase;color:var(--faint)}
+.cities{display:flex;gap:6px}
+.city{font:600 11px 'DM Sans';letter-spacing:.4px;color:var(--faint);padding:6px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.city.active{color:#fff;background:var(--panel);border:1px solid var(--line2)}
+.city-add{color:var(--c);cursor:pointer;padding:6px 9px;border:1px dashed var(--line2);border-radius:8px}
+.rail{display:flex;gap:14px;overflow-x:auto;padding:6px 24px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.rail::-webkit-scrollbar{height:0}
+.tile{scroll-snap-align:start;flex:0 0 auto;width:150px;padding:15px;border-radius:16px;cursor:pointer;position:relative;
+  background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(12px);transition:.18s var(--ease);overflow:hidden}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tc,#888);box-shadow:0 0 14px var(--tc,#888)}
+.tile:hover{transform:translateY(-4px);border-color:var(--line2)}
+.tile.on{border-color:var(--tc);box-shadow:0 0 26px -6px var(--tc)}
+.tile .g{font:700 9px 'DM Mono';letter-spacing:1.2px;text-transform:uppercase;color:var(--faint)}
+.tile .nm{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;color:#fff;margin:8px 0 2px;line-height:1.05}
+.tile .sl{font:400 12px 'DM Sans';color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .pi{position:absolute;right:13px;bottom:13px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(0,0,0,.3);border:1px solid var(--tc);color:#fff}
+.tile.on .pi{background:var(--tc);color:#120b10}
 
-    /* ---------- CITY TABS ---------- */
-    .city-bar{ display:flex; gap:6px; align-items:center; padding:6px 26px 18px; overflow-x:auto; }
-    .city-tab{
-      font:600 12px/1 'Libre Franklin'; letter-spacing:.6px; text-transform:uppercase;
-      color:var(--bone-faint); padding:9px 14px; border-radius:10px; cursor:pointer; white-space:nowrap;
-      transition:.16s var(--ease);
-    }
-    .city-tab:hover{ color:var(--bone); }
-    .city-tab.active{
-      color:#fff; text-shadow:0 0 10px var(--pink);
-      box-shadow:inset 0 -2px 0 var(--pink), 0 6px 16px -8px var(--pink);
-    }
-    .city-tab-add{
-      width:30px;height:30px;display:grid;place-items:center;border-radius:8px;cursor:pointer;
-      color:var(--amber); border:1px dashed var(--hairline-2); font-size:18px; flex-shrink:0;
-    }
-    .city-tab-add:hover{ border-color:var(--amber); box-shadow:0 0 12px rgba(255,177,46,.35); }
+/* ---------- volume dock ---------- */
+.dock{position:sticky;bottom:0;z-index:20;display:flex;align-items:center;gap:14px;padding:13px 24px;
+  background:linear-gradient(180deg,rgba(8,6,8,.4),rgba(8,6,8,.92));backdrop-filter:blur(16px);border-top:1px solid var(--line)}
+.dock .vlabel{font:600 11px 'DM Mono';letter-spacing:2px;color:var(--faint)}
+.vbtn{width:32px;height:32px;border-radius:9px;background:var(--panel);border:1px solid var(--line);color:var(--bone);cursor:pointer;font-size:16px}
+.vbtn:hover{border-color:var(--line2);color:#fff}
+#vol{flex:1;max-width:380px;height:6px;-webkit-appearance:none;appearance:none;border-radius:999px;
+  background:linear-gradient(90deg,var(--c) var(--p,80%),rgba(255,255,255,.12) var(--p,80%))}
+#vol::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 0 10px var(--c)}
+#vol::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--c)}
+.vnum{font:600 13px 'DM Sans';font-variant-numeric:tabular-nums;min-width:28px;text-align:center;color:var(--bone)}
 
-    main{ max-width:1280px; margin:0 auto; padding:6px 26px 0; }
+/* ---------- browse drawer (search + sxm) ---------- */
+.browse{max-width:1180px;margin:0 auto;width:100%;padding:0 24px}
+.browse summary{list-style:none;cursor:pointer;font:600 12px 'DM Mono';letter-spacing:2px;text-transform:uppercase;
+  color:var(--faint);padding:18px 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.browse summary::-webkit-details-marker{display:none}
+.browse summary:hover{color:var(--bone)}
+.browse[open] summary{color:var(--c)}
+.search-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.in{flex:1;min-width:160px;padding:13px 15px;border-radius:12px;color:var(--bone);background:rgba(0,0,0,.35);
+  border:1px solid var(--line2);font:400 14px 'DM Sans'}
+.in::placeholder{color:var(--faint)} .in:focus{outline:none;border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent)}
+.btn-go{padding:13px 22px;border-radius:12px;border:none;cursor:pointer;background:#fff;color:#120b10;font:700 13px 'DM Sans'}
+.stabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.stab{font:600 11px 'DM Sans';color:var(--dim);padding:8px 13px;border-radius:999px;background:var(--panel);border:1px solid var(--line);cursor:pointer}
+.stab.active{color:#fff;border-color:var(--c)}
+.spane{display:none} .spane.active{display:block}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:24px}
+.sxm-card{max-width:360px;padding:22px;border-radius:16px;background:rgba(12,16,30,.6);border:1px solid color-mix(in srgb,var(--blue) 40%,transparent);box-shadow:0 0 24px -10px var(--blue)}
+.sxm-card h3{font-family:'Bricolage Grotesque';font-weight:800;font-size:20px;margin-bottom:6px}
+.sxm-card p{color:var(--dim);font-size:13px;margin-bottom:14px}
+.sxm-card .in{width:100%;margin-bottom:10px}
+.sxm-btn{width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(180deg,#6e9bff,var(--blue));color:#fff;font:700 13px 'DM Sans'}
+.sxm-err{color:#ff8a73;font-size:12.5px;margin-top:8px;min-height:16px}
 
-    /* ---------- STATION GRID : wall of lit signs ---------- */
-    .station-grid{
-      display:grid; gap:20px;
-      grid-template-columns:repeat(auto-fill, minmax(220px,1fr));
-    }
-    .station-card{
-      --c:var(--card-color,#ffb12e);
-      position:relative; padding:18px 18px 16px; border-radius:var(--radius); cursor:pointer;
-      background:
-        radial-gradient(120% 120% at 50% 0%, color-mix(in srgb,var(--c) 14%, transparent), transparent 70%),
-        linear-gradient(180deg, rgba(18,11,15,.92), rgba(9,6,9,.94));
-      border:1.5px solid color-mix(in srgb,var(--c) 55%, #000);
-      box-shadow:
-        inset 0 0 14px color-mix(in srgb,var(--c) 22%, transparent),
-        0 0 0 1px rgba(0,0,0,.4),
-        0 0 14px -2px color-mix(in srgb,var(--c) 55%, transparent),
-        0 18px 40px -22px #000;
-      transition:transform .22s var(--ease), box-shadow .22s var(--ease);
-      animation:flickerOn .9s var(--ease) both;
-      min-height:150px; display:flex; flex-direction:column;
-    }
-    .station-card:hover{
-      transform:translateY(-3px) rotate(-.35deg);
-      box-shadow:
-        inset 0 0 18px color-mix(in srgb,var(--c) 30%, transparent),
-        0 0 22px -2px color-mix(in srgb,var(--c) 80%, transparent),
-        0 26px 50px -22px #000;
-    }
-    .station-card.playing{
-      border-color:var(--c);
-      box-shadow:
-        inset 0 0 26px color-mix(in srgb,var(--c) 40%, transparent),
-        0 0 26px color-mix(in srgb,var(--c) 85%, transparent),
-        0 0 60px -10px var(--c);
-    }
-    .card-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:auto; }
-    .card-top-left{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-    .genre-badge{
-      font:700 9.5px/1 'Libre Franklin'; letter-spacing:1.2px; text-transform:uppercase;
-      color:var(--bone); padding:5px 8px; border-radius:6px;
-      background:color-mix(in srgb,var(--c) 16%, #000); border:1px solid color-mix(in srgb,var(--c) 45%, transparent);
-    }
-    .sxm-badge{ font:700 9px/1 'Libre Franklin'; letter-spacing:1px; color:#fff; padding:4px 6px;border-radius:5px;
-      background:var(--sxm-blue); box-shadow:0 0 8px rgba(79,134,255,.6); }
-    .card-name{
-      font-family:'Rye',serif; font-size:23px; line-height:1.05; color:#fff; margin:14px 0 3px;
-      text-shadow:0 0 1px #fff, 0 0 8px color-mix(in srgb,var(--c) 90%, #fff), 0 0 22px color-mix(in srgb,var(--c) 70%, transparent);
-    }
-    .card-slogan{ font:400 12.5px/1.3 'Libre Franklin'; font-style:italic; color:var(--bone-faint); }
-    .card-footer{ display:flex; justify-content:flex-end; margin-top:14px; }
-    .play-btn{
-      width:46px; height:46px; border-radius:50%; cursor:pointer; display:grid; place-items:center;
-      color:#fff; background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--c) 30%,#120b0f), #0a0709);
-      border:1.5px solid var(--c); box-shadow:0 0 12px -1px color-mix(in srgb,var(--c) 80%,transparent), inset 0 0 8px color-mix(in srgb,var(--c) 30%,transparent);
-      transition:.16s var(--ease);
-    }
-    .play-btn svg{ width:18px;height:18px; filter:drop-shadow(0 0 4px var(--c)); }
-    .play-btn:hover{ transform:scale(1.08); box-shadow:0 0 20px color-mix(in srgb,var(--c) 95%,transparent); }
-    .station-card.playing .play-btn{ background:var(--c); color:#120b0f; }
-    .eq-bars{ display:none; }
-    .station-card.playing .eq-bars{ display:flex; gap:3px; align-items:flex-end; height:16px; }
-    .station-card.playing .eq-bars span{ width:3px; background:var(--c); box-shadow:0 0 6px var(--c); border-radius:2px; animation:eqb .85s ease-in-out infinite alternate; }
-    .card-bulb-border{ display:none; }
-    .station-card.playing .card-bulb-border{
-      display:block; position:absolute; inset:-3px; border-radius:calc(var(--radius) + 3px); pointer-events:none;
-      padding:3px;
-      background:
-        radial-gradient(circle, #fff6e0 0 1.6px, color-mix(in srgb,var(--c) 80%,#ffb12e) 1.6px 2.8px, transparent 3px) 0 0/16px 16px round;
-      -webkit-mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-      mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-      filter:drop-shadow(0 0 5px var(--c)); opacity:.9; background-repeat:repeat;
-      animation:chase 1.6s linear infinite;
-    }
+/* ---------- video modal ---------- */
+.vmodal{position:fixed;inset:0;z-index:90;display:none;place-items:center;background:rgba(2,2,4,.86);backdrop-filter:blur(10px);padding:20px}
+.vmodal.show{display:grid}
+.vmodal .frame{width:min(960px,96vw);aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 40px 100px -20px #000,0 0 0 1px var(--line2)}
+.vmodal iframe{width:100%;height:100%;border:0}
+.vmodal .x{position:absolute;top:18px;right:20px;width:42px;height:42px;border-radius:50%;background:var(--panel);border:1px solid var(--line2);color:#fff;font-size:20px;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,12px);z-index:95;opacity:0;padding:12px 20px;border-radius:12px;
+  background:rgba(20,16,22,.95);border:1px solid var(--c);color:var(--bone);font:500 13px 'DM Sans';pointer-events:none;transition:.25s var(--ease)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal-ov{position:fixed;inset:0;z-index:88;display:none;place-items:center;background:rgba(4,3,6,.7);backdrop-filter:blur(5px)}
+.modal-ov.show{display:grid}
+.modal{width:min(92vw,360px);padding:24px;border-radius:16px;background:#15101a;border:1px solid var(--line2)}
+.modal h3{font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;margin-bottom:14px}
+.modal .in{width:100%;margin-bottom:16px}
+.mbtns{display:flex;justify-content:flex-end;gap:10px}
+.mbtn{padding:11px 18px;border-radius:10px;cursor:pointer;font:700 13px 'DM Sans';border:none}
+.mbtn.c{background:transparent;border:1px solid var(--line2);color:var(--dim)}
+.mbtn.s{background:var(--c);color:#120b10}
 
-    .empty-state{ grid-column:1/-1; text-align:center; padding:50px; color:var(--bone-faint); }
-
-    .pagination{ display:flex; justify-content:center; align-items:center; gap:16px; margin:28px 0 6px; }
-    .page-btn{ width:38px;height:38px;border-radius:10px; background:rgba(20,12,16,.6); border:1px solid var(--hairline-2);
-      color:var(--bone-dim); cursor:pointer; font-size:15px; transition:.16s; }
-    .page-btn:hover:not(:disabled){ color:#fff; border-color:var(--amber); }
-    .page-btn:disabled{ opacity:.3; cursor:default; }
-    .page-indicator{ font-family:'Rye',serif; font-size:14px; color:var(--bone-dim); letter-spacing:.5px; }
-
-    /* ---------- SEARCH ---------- */
-    .search-section{ max-width:1280px; margin:46px auto 0; padding:0 26px; }
-    .search-section h2{
-      font-family:'Rye',serif; font-weight:400; font-size:26px; color:#fff; margin-bottom:18px;
-      text-shadow:0 0 2px #fff,0 0 12px var(--cyan),0 0 28px rgba(47,244,228,.5);
-    }
-    .search-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
-    .search-tab-btn{
-      font:600 11px/1 'Libre Franklin'; letter-spacing:.6px; text-transform:uppercase; cursor:pointer;
-      color:var(--bone-dim); padding:9px 14px; border-radius:999px;
-      background:rgba(20,12,16,.55); border:1px solid var(--hairline-2); transition:.16s var(--ease);
-    }
-    .search-tab-btn:hover{ color:#fff; }
-    .search-tab-btn.active{ color:#fff; border-color:var(--amber); box-shadow:0 0 14px -2px rgba(255,177,46,.6); text-shadow:0 0 8px rgba(255,177,46,.5); }
-    .search-tab-btn[data-pane="somafm"].active{ border-color:var(--cyan); box-shadow:0 0 14px -2px var(--cyan); text-shadow:0 0 8px var(--cyan); }
-    .search-tab-btn[data-pane="radiogarden"].active{ border-color:var(--violet); box-shadow:0 0 14px -2px var(--violet); text-shadow:0 0 8px var(--violet); }
-    .search-tab-btn.sxm-tab.active{ border-color:var(--sxm-blue); box-shadow:0 0 14px -2px var(--sxm-blue); text-shadow:0 0 8px var(--sxm-blue); }
-    .search-pane{ display:none; } .search-pane.active{ display:block; }
-    .search-row{ display:flex; gap:10px; flex-wrap:wrap; }
-    .search-input,.sxm-input,.modal input{
-      flex:1; min-width:160px; padding:13px 15px; border-radius:11px; color:var(--bone);
-      background:rgba(6,4,8,.7); border:1px solid var(--hairline-2); font:400 14px 'Libre Franklin';
-      transition:.16s;
-    }
-    .search-input::placeholder,.sxm-input::placeholder,.modal input::placeholder{ color:var(--bone-faint); }
-    .search-input:focus,.sxm-input:focus,.modal input:focus{ outline:none; border-color:var(--amber); box-shadow:0 0 0 3px rgba(255,177,46,.18); }
-    .search-btn,.modal-save,.sxm-login-btn{
-      padding:13px 22px; border-radius:11px; cursor:pointer; border:none; color:#1a0d05;
-      font:800 13px 'Libre Franklin'; letter-spacing:.4px;
-      background:linear-gradient(180deg,#ffc658,var(--amber)); box-shadow:0 0 16px -2px rgba(255,177,46,.6);
-      transition:.16s var(--ease);
-    }
-    .search-btn:hover,.modal-save:hover,.sxm-login-btn:hover{ filter:brightness(1.08); box-shadow:0 0 24px -2px rgba(255,177,46,.8); }
-    .search-results{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-top:18px; }
-
-    /* SXM */
-    .sxm-login-card{ max-width:380px; padding:24px; border-radius:14px; background:rgba(10,12,24,.6);
-      border:1px solid color-mix(in srgb,var(--sxm-blue) 45%,transparent); box-shadow:0 0 24px -8px var(--sxm-blue); }
-    .sxm-login-card h3{ font-family:'Rye',serif; font-weight:400; font-size:20px; color:#fff; margin-bottom:6px;
-      text-shadow:0 0 10px var(--sxm-blue); }
-    .sxm-login-card p{ color:var(--bone-dim); font-size:13px; margin-bottom:14px; }
-    .sxm-input{ width:100%; margin-bottom:10px; }
-    .sxm-login-btn{ width:100%; background:linear-gradient(180deg,#6e9bff,var(--sxm-blue)); color:#fff; box-shadow:0 0 16px -2px var(--sxm-blue); }
-    .sxm-error{ color:#ff8a7a; font-size:12.5px; margin-top:8px; min-height:16px; }
-    .sxm-logged-in-bar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-    .sxm-user-info{ color:var(--bone-dim); font-size:13px; } .sxm-user-info strong{ color:#9fbcff; }
-    .sxm-logout-btn{ padding:8px 14px;border-radius:9px;cursor:pointer;background:transparent;border:1px solid var(--hairline-2);color:var(--bone-dim);font:600 12px 'Libre Franklin'; }
-
-    /* ---------- VOLUME BAR : amp faceplate ---------- */
-    .volume-bar{
-      position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex; align-items:center; gap:14px;
-      padding:14px 26px; color:var(--bone-dim);
-      background:linear-gradient(180deg, rgba(10,6,9,.86), rgba(6,4,6,.96));
-      border-top:1px solid var(--hairline-2); backdrop-filter:blur(8px);
-      box-shadow:0 -8px 30px -10px #000;
-    }
-    .vol-label{ font-family:'Rye',serif; font-size:13px; color:var(--amber); letter-spacing:.5px; text-shadow:0 0 8px rgba(255,177,46,.5); }
-    .vol-icon{ color:var(--bone-faint); }
-    .vol-btn{ width:34px;height:34px;border-radius:9px;cursor:pointer;background:rgba(28,16,20,.8);border:1px solid var(--hairline-2);color:var(--bone); font-size:17px; transition:.14s; }
-    .vol-btn:hover{ border-color:var(--amber); color:#fff; }
-    .vol-slider{ flex:1; max-width:520px; height:8px; -webkit-appearance:none; appearance:none; border-radius:999px;
-      background:linear-gradient(90deg, var(--amber) var(--vol-pct,80%), rgba(255,255,255,.1) var(--vol-pct,80%));
-      box-shadow:inset 0 0 6px rgba(0,0,0,.6); }
-    .vol-slider::-webkit-slider-thumb{ -webkit-appearance:none; width:20px;height:20px;border-radius:50%;
-      background:radial-gradient(circle at 40% 35%, #fff3d4, #d6952a); border:2px solid #3a2410; cursor:pointer;
-      box-shadow:0 0 10px rgba(255,177,46,.7); }
-    .vol-slider::-moz-range-thumb{ width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff3d4,#d6952a);border:2px solid #3a2410;cursor:pointer;box-shadow:0 0 10px rgba(255,177,46,.7); }
-    .vol-number{ font:600 14px 'Libre Franklin'; font-variant-numeric:tabular-nums; color:var(--bone); min-width:30px; text-align:center; }
-    .vol-stop-btn{ display:flex; align-items:center; gap:6px; padding:9px 16px; border-radius:10px; cursor:pointer;
-      background:transparent; border:1.5px solid color-mix(in srgb,var(--red) 60%,#000); color:#ff8a73; font:700 12px 'Libre Franklin'; letter-spacing:.5px; transition:.16s; }
-    .vol-stop-btn:hover{ border-color:var(--red); color:#fff; box-shadow:0 0 16px -2px var(--red); }
-
-    /* ---------- MODAL + TOAST ---------- */
-    .modal-overlay{ position:fixed; inset:0; z-index:60; display:none; place-items:center; background:rgba(6,4,8,.7); backdrop-filter:blur(4px); }
-    .modal-overlay.show{ display:grid; }
-    .modal{ width:min(92vw,360px); padding:24px; border-radius:16px; background:linear-gradient(180deg,#1a0f14,#0e0810); border:1px solid var(--hairline-2); box-shadow:0 30px 70px -30px #000, 0 0 30px -10px rgba(255,177,46,.3); }
-    .modal h3{ font-family:'Rye',serif; font-weight:400; font-size:20px; color:#fff; margin-bottom:14px; }
-    .modal input{ width:100%; margin-bottom:16px; }
-    .modal-btns{ display:flex; justify-content:flex-end; gap:10px; }
-    .modal-cancel{ padding:11px 18px;border-radius:10px;cursor:pointer;background:transparent;border:1px solid var(--hairline-2);color:var(--bone-dim);font:600 13px 'Libre Franklin'; }
-    .toast{ position:fixed; left:50%; bottom:110px; transform:translateX(-50%) translateY(10px); z-index:80; opacity:0;
-      padding:13px 20px; border-radius:12px; background:linear-gradient(180deg,#1a0f14,#0e0810); color:var(--bone);
-      border:1px solid var(--amber); box-shadow:0 0 22px -6px rgba(255,177,46,.6); font:500 13px 'Libre Franklin';
-      pointer-events:none; transition:.25s var(--ease); }
-    .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-
-    /* ---------- RESPONSIVE ---------- */
-    @media (max-width:680px){
-      header{ flex-wrap:wrap; padding:16px 18px 24px; gap:12px; }
-      .logo span:nth-child(1){ font-size:28px; } .logo span:nth-child(2){ font-size:34px; }
-      #nowPlayingHero{ order:3; flex:1 0 100%; } .header-btns{ order:2; }
-      main,.search-section{ padding-left:16px; padding-right:16px; }
-      .station-grid{ grid-template-columns:repeat(2,1fr); gap:12px; }
-      .card-name{ font-size:19px; } .station-card{ padding:14px; min-height:128px; }
-      .vol-label,.vol-icon{ display:none; }
-    }
-    @media (min-width:1300px){
-      .logo span:nth-child(1){ font-size:40px; } .logo span:nth-child(2){ font-size:50px; }
-      .station-grid{ grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
-    }
-
-    /* ---------- REDUCED MOTION ---------- */
-    @media (prefers-reduced-motion:reduce){
-      *,*::before,*::after{ animation:none !important; transition:none !important; }
-      .logo span,.station-card{ opacity:1 !important; filter:none !important; }
-    }
-
-  </style>
+@keyframes viz{from{height:6px}to{height:34px}}
+@media (max-width:820px){
+  .stage{grid-template-columns:1fr;gap:24px;padding:14px 18px 24px;text-align:center}
+  .cover{max-width:300px;margin:0 auto}
+  .np .eyebrow,.actions,.viz{justify-content:center}
+  .brand .a,.brand .b{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
-<div class="grain"></div>
+<div id="bloom"></div><div id="vignette"></div><div id="grain"></div>
 
-<!-- ═══ HEADER ═══ -->
-<header>
-  <div class="header-rail" aria-hidden="true"></div>
-  <div class="header-inner">
-    <div class="logo" aria-label="Just Wingin' It Homestead Radio">
-      <span class="logo-line1" aria-hidden="true">Just Wingin' It</span>
-      <span class="logo-line2" aria-hidden="true">Homestead</span>
-      <span class="logo-tag" aria-hidden="true">Radio</span>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="a">Just Wingin' It</span><span class="b">HOMESTEAD</span></div>
+    <div class="top-actions">
+      <a class="icon-btn" href="/mapper.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg><span>Deck</span></a>
+      <a class="icon-btn" href="http://192.168.2.89:32500" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16" fill="currentColor" stroke="none"/></svg><span>Plexamp</span></a>
     </div>
+  </header>
 
-    <div class="header-btns">
-      <a class="btn-pill" href="/mapper.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        <span>Deck</span>
-      </a>
-      <a class="btn-pill" href="http://192.168.2.89:32500" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
-        <span>Plexamp</span>
-      </a>
+  <!-- STAGE -->
+  <section class="stage" id="stage">
+    <div class="cover" id="cover">
+      <div class="ph" id="coverPh">JUST WINGIN' IT</div>
+      <img id="coverImg" alt="" />
     </div>
-  </div>
-</header>
-
-<!-- ═══ NOW-PLAYING HERO ═══ -->
-<div class="now-playing-hero" id="nowPlayingHero" role="status" aria-live="polite" aria-label="Now playing">
-  <div class="hero-bulb-border" aria-hidden="true"></div>
-  <span class="on-air-badge" aria-hidden="true">ON AIR</span>
-  <div class="eq-mini" id="eqMini" aria-hidden="true">
-    <span style="height:8px"></span>
-    <span style="height:12px"></span>
-    <span style="height:5px"></span>
-    <span style="height:10px"></span>
-  </div>
-  <div class="ticker-wrap">
-    <div class="ticker-inner" id="tickerText">Nothing playing</div>
-  </div>
-</div>
-
-<!-- ═══ CITY TAB BAR ═══ -->
-<div class="city-bar" id="cityBar" role="tablist" aria-label="Filter by city">
-  <div class="city-tab active" data-city="All" role="tab" aria-selected="true" tabindex="0">All</div>
-  <div class="city-tab-add" id="addCityBtn" title="Add city" role="button" tabindex="0" aria-label="Add city">+</div>
-</div>
-
-<!-- ═══ MAIN ═══ -->
-<main>
-  <!-- Station grid -->
-  <div class="station-grid" id="stationGrid"></div>
-
-  <!-- Pagination -->
-  <nav class="pagination" id="pagination" aria-label="Station pages">
-    <button class="page-btn" id="prevPage" aria-label="Previous page">&#8592;</button>
-    <span class="page-indicator" id="pageIndicator">Page 1 / 1</span>
-    <button class="page-btn" id="nextPage" aria-label="Next page">&#8594;</button>
-  </nav>
-
-  <!-- Search section -->
-  <section class="search-section" aria-labelledby="searchHeading">
-    <h2 id="searchHeading">Find More Signs</h2>
-
-    <!-- Source tabs -->
-    <div class="search-tabs" role="tablist" aria-label="Search source">
-      <button class="search-tab-btn active" data-pane="all" role="tab" aria-selected="true" aria-controls="pane-all">All</button>
-      <button class="search-tab-btn" data-pane="radiobrowser" role="tab" aria-selected="false" aria-controls="pane-radiobrowser">Radio Browser</button>
-      <button class="search-tab-btn" data-pane="somafm" role="tab" aria-selected="false" aria-controls="pane-somafm">SomaFM</button>
-      <button class="search-tab-btn" data-pane="radiogarden" role="tab" aria-selected="false" aria-controls="pane-radiogarden">Radio Garden</button>
-      <button class="search-tab-btn sxm-tab" data-pane="siriusxm" role="tab" aria-selected="false" aria-controls="pane-siriusxm">SiriusXM</button>
-    </div>
-
-    <!-- All sources pane (htmx) -->
-    <div class="search-pane active" id="pane-all" role="tabpanel">
-      <form class="search-row" hx-get="/partials/search" hx-target="#searchResults" hx-swap="innerHTML"
-            hx-indicator="#searchResults">
-        <input type="hidden" name="source" value="all" />
-        <input class="search-input" name="q" id="searchInput" type="search" placeholder="Search station name…" aria-label="Station name" />
-        <input class="search-input" name="city" id="searchCity" type="text" placeholder="City / state (optional)" aria-label="City or state" style="max-width:180px" />
-        <button class="search-btn" type="submit" id="searchBtn">Search</button>
-      </form>
-      <div class="search-results" id="searchResults" role="list" aria-label="Search results"></div>
-    </div>
-
-    <!-- Radio Browser pane (htmx) -->
-    <div class="search-pane" id="pane-radiobrowser" role="tabpanel">
-      <form class="search-row" hx-get="/partials/search" hx-target="#rbSearchResults" hx-swap="innerHTML">
-        <input type="hidden" name="source" value="radiobrowser" />
-        <input class="search-input" name="q" id="rbSearchInput" type="search" placeholder="Search station name…" aria-label="Station name" />
-        <input class="search-input" name="city" id="rbSearchCity" type="text" placeholder="City / state (optional)" aria-label="City or state" style="max-width:180px" />
-        <button class="search-btn" type="submit" id="rbSearchBtn">Search</button>
-      </form>
-      <div class="search-results" id="rbSearchResults" role="list" aria-label="Radio Browser results"></div>
-    </div>
-
-    <!-- SomaFM pane (htmx) -->
-    <div class="search-pane" id="pane-somafm" role="tabpanel">
-      <p class="soma-note">Curated internet radio channels from SomaFM</p>
-      <div class="search-results" id="somaResults" role="list" aria-label="SomaFM channels"
-           hx-get="/partials/somafm"
-           hx-trigger="intersect once"
-           hx-indicator="#somaSpinner">
-        <div id="somaSpinner" style="color:var(--faint);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:'Libre Franklin',sans-serif">Loading SomaFM channels…</div>
+    <div class="np">
+      <div class="eyebrow" id="eyebrow"><span class="dot"></span><span id="eyebrowText">Off Air</span></div>
+      <h1 class="song" id="songTitle">Pick a station</h1>
+      <div class="artist" id="artistName">to fire it up</div>
+      <div class="viz" id="viz"></div>
+      <div class="actions" id="actions">
+        <button class="btn btn-ghost" id="videoBtn" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21" fill="currentColor" stroke="none"/></svg>Watch Video</button>
+        <button class="btn btn-stop" id="stopBtn" style="display:none"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Stop</button>
       </div>
+      <div class="idle-hint" id="idleHint">Tap a sign below and the room lights up. 🌃</div>
     </div>
-
-    <!-- Radio Garden pane (htmx) -->
-    <div class="search-pane" id="pane-radiogarden" role="tabpanel">
-      <form class="search-row" hx-get="/partials/search" hx-target="#rgSearchResults" hx-swap="innerHTML">
-        <input type="hidden" name="source" value="radiogarden" />
-        <input class="search-input" name="q" id="rgSearchInput" type="search" placeholder="Search Radio Garden…" aria-label="Radio Garden search" />
-        <button class="search-btn" type="submit" id="rgSearchBtn">Search</button>
-      </form>
-      <div class="search-results" id="rgSearchResults" role="list" aria-label="Radio Garden results"></div>
-    </div>
-
-    <!-- SiriusXM pane -->
-    <div class="search-pane" id="pane-siriusxm" role="tabpanel">
-      <div id="sxmLoginSection">
-        <div class="sxm-login-card">
-          <h3>Backstage Pass</h3>
-          <p>Sign in with your SiriusXM account to browse channels.</p>
-          <label for="sxmUsername" style="display:none">Username or Email</label>
-          <input class="sxm-input" id="sxmUsername" type="text" placeholder="Username / Email" autocomplete="username" aria-label="SiriusXM username or email" />
-          <label for="sxmPassword" style="display:none">Password</label>
-          <input class="sxm-input" id="sxmPassword" type="password" placeholder="Password" autocomplete="current-password" aria-label="SiriusXM password" />
-          <button class="sxm-login-btn" id="sxmLoginBtn">
-            <span id="sxmLoginLabel">Sign In</span>
-          </button>
-          <div class="sxm-error" id="sxmLoginError" role="alert"></div>
-        </div>
-      </div>
-
-      <div id="sxmChannelSection" style="display:none">
-        <div class="sxm-logged-in-bar">
-          <div class="sxm-user-info">Signed in as <strong id="sxmUsernameDisplay"></strong></div>
-          <button class="sxm-logout-btn" id="sxmLogoutBtn">Sign Out</button>
-        </div>
-        <div class="search-results" id="sxmChannelResults" role="list" aria-label="SiriusXM channels"></div>
-      </div>
-    </div>
-
   </section>
-</main>
 
-<!-- ═══ VOLUME BAR (fixed bottom) ═══ -->
-<div class="volume-bar" role="region" aria-label="Volume control">
-  <div class="vol-label" aria-hidden="true">Volume</div>
-  <svg class="vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-  </svg>
-  <button class="vol-btn" id="volDown" aria-label="Volume down">&minus;</button>
-  <div class="vol-slider-wrap">
-    <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" style="--vol-pct:80%" aria-label="Volume" />
-  </div>
-  <button class="vol-btn" id="volUp" aria-label="Volume up">+</button>
-  <span class="vol-number" id="volNumber" aria-live="polite" aria-atomic="true">80</span>
-  <button class="vol-stop-btn" id="stopBtn" aria-label="Stop playback">&#9646; Stop</button>
-</div>
-
-<!-- ═══ ADD CITY MODAL ═══ -->
-<div class="modal-overlay" id="cityModal" role="dialog" aria-modal="true" aria-labelledby="cityModalTitle">
-  <div class="modal">
-    <h3 id="cityModalTitle">Add City</h3>
-    <label for="cityInput" style="display:none">City name</label>
-    <input type="text" id="cityInput" placeholder="e.g. Memphis" aria-label="City name" />
-    <div class="modal-btns">
-      <button class="modal-cancel" id="cityCancelBtn">Cancel</button>
-      <button class="modal-save" id="citySaveBtn">Add</button>
+  <!-- PICKER -->
+  <div class="picker-wrap">
+    <div class="picker-head">
+      <h2>Stations</h2>
+      <div class="cities" id="cities"></div>
     </div>
+    <div class="rail" id="rail"></div>
   </div>
+
+  <!-- volume dock -->
+  <div class="dock">
+    <span class="vlabel">VOL</span>
+    <button class="vbtn" id="volDown">&minus;</button>
+    <input type="range" id="vol" min="0" max="100" value="80" />
+    <button class="vbtn" id="volUp">+</button>
+    <span class="vnum" id="vnum">80</span>
+  </div>
+
+  <!-- browse drawer -->
+  <details class="browse">
+    <summary>＋ Add stations &amp; search</summary>
+    <div class="stabs">
+      <button class="stab active" data-pane="all">All sources</button>
+      <button class="stab" data-pane="somafm">SomaFM</button>
+      <button class="stab" data-pane="sxm">SiriusXM</button>
+    </div>
+    <div class="spane active" id="pane-all">
+      <form class="search-row" hx-get="/partials/search" hx-target="#searchResults" hx-swap="innerHTML" hx-indicator="#searchResults">
+        <input type="hidden" name="source" value="all" />
+        <input class="in" name="q" id="searchInput" placeholder="Search any station…" />
+        <input class="in" name="city" placeholder="City / state (optional)" style="max-width:200px" />
+        <button class="btn-go" type="submit">Search</button>
+      </form>
+      <div class="results" id="searchResults"></div>
+    </div>
+    <div class="spane" id="pane-somafm">
+      <div class="results" id="somaResults" hx-get="/partials/somafm" hx-trigger="intersect once" hx-indicator="#somaResults">
+        <div id="somaSpinner" style="color:var(--faint);font-size:13px;grid-column:1/-1">Loading SomaFM…</div>
+      </div>
+    </div>
+    <div class="spane" id="pane-sxm">
+      <div id="sxmLoginSection">
+        <div class="sxm-card">
+          <h3>SiriusXM</h3><p>Sign in to browse channels.</p>
+          <input class="in" id="sxmUsername" placeholder="Username / Email" autocomplete="username" />
+          <input class="in" id="sxmPassword" type="password" placeholder="Password" autocomplete="current-password" />
+          <button class="sxm-btn" id="sxmLoginBtn"><span id="sxmLoginLabel">Sign In</span></button>
+          <div class="sxm-err" id="sxmLoginError"></div>
+        </div>
+      </div>
+      <div id="sxmChannelSection" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="color:var(--dim);font-size:13px">Signed in as <strong id="sxmUsernameDisplay"></strong></div>
+          <button class="stab" id="sxmLogoutBtn">Sign Out</button>
+        </div>
+        <div class="results" id="sxmChannelResults"></div>
+      </div>
+    </div>
+  </details>
 </div>
 
-<!-- ═══ TOAST ═══ -->
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<!-- video modal -->
+<div class="vmodal" id="vmodal"><button class="x" id="vmodalX">&times;</button><div class="frame" id="vframe"></div></div>
+<!-- add city modal -->
+<div class="modal-ov" id="cityModal"><div class="modal"><h3>Add a city</h3><input class="in" id="cityInput" placeholder="e.g. Memphis" /><div class="mbtns"><button class="mbtn c" id="cityCancel">Cancel</button><button class="mbtn s" id="citySave">Add</button></div></div></div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ── State ──
-let stations = [];
-let cities = [];
-let currentStationId = null;
-let volume = 80;
-let activeCity = 'All';
-let dragSrcIndex = null;
-let volDebounce = null;
-let activeSearchPane = 'all';
-let sxmLoggedIn = false;
-let sxmUsername = '';
-let sxmChannelsLoaded = false;
-let currentPage = 1;
-const PAGE_SIZE = 12;
+const $ = s => document.querySelector(s);
+let stations=[], cities=[], activeCity='All', currentId=null, npTimer=null, lastArt=null;
+const api = async (m,p,b)=>{ const r=await fetch('/api'+p,{method:m,headers:b?{'Content-Type':'application/json'}:undefined,body:b?JSON.stringify(b):undefined}); return r.json(); };
+const toast = (m)=>{ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); };
 
-// ── Toast ──
-function showToast(msg, success = true) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (success ? ' success' : '');
-  setTimeout(() => { t.className = 'toast'; }, 2200);
-}
+// build the visualizer bars once
+(function(){ const v=$('#viz'); for(let i=0;i<28;i++){ const s=document.createElement('span'); s.style.animationDelay=(Math.random()*-1)+'s'; s.style.animationDuration=(0.6+Math.random()*0.7)+'s'; v.appendChild(s);} })();
 
-// ── API helpers ──
-async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body !== undefined) opts.body = JSON.stringify(body);
-  const r = await fetch('/api' + path, opts);
-  return r.json();
-}
+function setAccent(c){ if(c) document.documentElement.style.setProperty('--c', c); }
 
-// ── Volume ──
-function updateVolSlider(v) {
-  volume = v;
-  const slider = document.getElementById('volSlider');
-  slider.value = v;
-  slider.style.setProperty('--vol-pct', v + '%');
-  document.getElementById('volNumber').textContent = v;
-}
-
-async function setVolume(v) {
-  v = Math.max(0, Math.min(100, v));
-  updateVolSlider(v);
-  clearTimeout(volDebounce);
-  volDebounce = setTimeout(async () => {
-    await api('POST', '/volume', { volume: v });
-  }, 80);
-}
-
-document.getElementById('volSlider').addEventListener('input', e => setVolume(+e.target.value));
-document.getElementById('volDown').addEventListener('click', () => setVolume(volume - 5));
-document.getElementById('volUp').addEventListener('click', () => setVolume(volume + 5));
-
-document.getElementById('stopBtn').addEventListener('click', async () => {
-  await api('POST', '/stop');
-  currentStationId = null;
-  updateTicker(null);
-  renderGrid();
-});
-
-// ── Ticker ──
-function updateTicker(station) {
-  const ticker = document.getElementById('tickerText');
-  const eq = document.getElementById('eqMini');
-  const hero = document.getElementById('nowPlayingHero');
-  ticker.onclick = null;
-  ticker.style.cursor = '';
-  ticker.style.color = '';
-  if (station) {
-    ticker.textContent = `${station.name}  —  ${station.slogan || station.genre}`;
-    ticker.className = 'ticker-inner active';
-    eq.className = 'eq-mini active';
-    hero.classList.add('playing');
-  } else {
-    ticker.textContent = 'Nothing playing';
-    ticker.className = 'ticker-inner';
-    eq.className = 'eq-mini';
-    hero.classList.remove('playing');
-  }
-}
-
-// One-tap resume: when nothing is playing, offer the last-played station.
-function showResume(station) {
-  const ticker = document.getElementById('tickerText');
-  const eq = document.getElementById('eqMini');
-  const hero = document.getElementById('nowPlayingHero');
-  ticker.textContent = '▶  Tap to resume ' + station.name;
-  ticker.className = 'ticker-inner';
-  ticker.style.cursor = 'pointer';
-  ticker.style.color = 'var(--accent, #5ad1ff)';
-  eq.className = 'eq-mini';
-  hero.classList.remove('playing');
-  ticker.onclick = () => playStation(station.id);
-}
-
-// ── Play / Stop ──
-async function playStation(id) {
-  if (currentStationId === id) {
-    await api('POST', '/stop');
-    currentStationId = null;
-    updateTicker(null);
-  } else {
-    const res = await api('POST', '/play', { id });
-    if (res.ok) {
-      currentStationId = id;
-      updateTicker(res.station);
-    } else {
-      showToast('Could not play station', false);
-    }
-  }
-  renderGrid();
-}
-
-// ── City tabs ──
-function renderCityTabs() {
-  const bar = document.getElementById('cityBar');
-  bar.querySelectorAll('.city-tab').forEach(t => t.remove());
-  const addBtn = document.getElementById('addCityBtn');
-
-  const allTab = document.createElement('div');
-  allTab.className = 'city-tab' + (activeCity === 'All' ? ' active' : '');
-  allTab.dataset.city = 'All';
-  allTab.textContent = 'All';
-  bar.insertBefore(allTab, addBtn);
-
-  cities.forEach(city => {
-    const tab = document.createElement('div');
-    tab.className = 'city-tab' + (activeCity === city ? ' active' : '');
-    tab.dataset.city = city;
-    tab.textContent = city;
-    bar.insertBefore(tab, addBtn);
-  });
-
-  bar.querySelectorAll('.city-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      activeCity = tab.dataset.city;
-      currentPage = 1;
-      renderCityTabs();
-      renderGrid();
-    });
+function renderRail(){
+  const rail=$('#rail'); rail.innerHTML='';
+  const list = activeCity==='All' ? stations : stations.filter(s=>s.city===activeCity);
+  if(!list.length){ rail.innerHTML='<div style="color:var(--faint);padding:20px">No stations here — add some below.</div>'; return; }
+  list.forEach(s=>{
+    const t=document.createElement('div'); t.className='tile'+(s.id===currentId?' on':''); t.style.setProperty('--tc', s.color||'#888');
+    t.innerHTML=`<div class="g">${(s.genre||'Radio')}</div><div class="nm">${s.name}</div><div class="sl">${s.slogan||s.city||''}</div>
+      <div class="pi">${s.id===currentId?'<svg width="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>':'<svg width="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="8 5 19 12 8 19"/></svg>'}</div>`;
+    t.onclick=()=> s.id===currentId ? stop() : play(s);
+    rail.appendChild(t);
   });
 }
-
-// ── Pagination ──
-function updatePagination(totalCount) {
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const paginationEl = document.getElementById('pagination');
-  const prevBtn = document.getElementById('prevPage');
-  const nextBtn = document.getElementById('nextPage');
-  const indicator = document.getElementById('pageIndicator');
-
-  if (totalCount <= PAGE_SIZE) {
-    paginationEl.style.display = 'none';
-  } else {
-    paginationEl.style.display = 'flex';
-    prevBtn.disabled = currentPage <= 1;
-    nextBtn.disabled = currentPage >= totalPages;
-    indicator.textContent = `Page ${currentPage} of ${totalPages}`;
-  }
+function renderCities(){
+  const c=$('#cities'); c.innerHTML='';
+  const mk=(name,label)=>{ const d=document.createElement('div'); d.className='city'+(activeCity===name?' active':''); d.textContent=label||name; d.onclick=()=>{activeCity=name;renderCities();renderRail();}; return d; };
+  c.appendChild(mk('All'));
+  cities.forEach(ci=>c.appendChild(mk(ci)));
+  const add=document.createElement('div'); add.className='city-add'; add.textContent='＋'; add.onclick=()=>$('#cityModal').classList.add('show'); c.appendChild(add);
 }
 
-// ── Station grid ──
-function renderGrid() {
-  const grid = document.getElementById('stationGrid');
-  grid.innerHTML = '';
+function showHero(st){
+  $('#stage').classList.add('playing');
+  $('#eyebrowText').textContent = st.name || 'On Air';
+  $('#songTitle').textContent = st.name; $('#artistName').textContent = st.slogan||'';
+  $('#idleHint').style.display='none'; $('#stopBtn').style.display='';
+  setAccent(st.color);
+}
+function clearHero(){
+  $('#stage').classList.remove('playing'); $('#eyebrowText').textContent='Off Air';
+  $('#songTitle').textContent='Pick a station'; $('#artistName').textContent='to fire it up';
+  $('#idleHint').style.display=''; $('#stopBtn').style.display='none'; $('#videoBtn').style.display='none';
+  $('#bloom').classList.remove('on'); $('#coverImg').classList.remove('show'); $('#coverPh').style.display='';
+  lastArt=null;
+}
+async function play(st){
+  currentId=st.id; showHero(st); renderRail();
+  api('POST','/play',{id:st.id});
+  pollNow(true);
+}
+async function stop(){ currentId=null; api('POST','/stop'); clearHero(); renderRail(); if(npTimer)clearTimeout(npTimer); }
 
-  const filtered = activeCity === 'All'
-    ? stations
-    : stations.filter(s => s.city === activeCity);
-
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state"><p>No stations for this city.<br>Use search below to add some.</p></div>';
-    updatePagination(0);
-    return;
-  }
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  if (currentPage > totalPages) currentPage = totalPages;
-
-  const pageStations = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  const pageOffset = (currentPage - 1) * PAGE_SIZE;
-  pageStations.forEach((station, pageIdx) => {
-    const absIndex = activeCity === 'All'
-      ? pageOffset + pageIdx
-      : stations.indexOf(station);
-    const card = document.createElement('div');
-    card.className = 'station-card' + (station.id === currentStationId ? ' playing' : '');
-    card.style.setProperty('--card-color', station.color || '#555');
-    card.style.animationDelay = (pageIdx * 0.04) + 's';
-    card.draggable = true;
-    card.dataset.id = station.id;
-    card.dataset.index = absIndex;
-
-    const isSxm = station.source === 'siriusxm';
-
-    // Bulb border overlay (shown when .playing)
-    const bulbBorder = document.createElement('div');
-    bulbBorder.className = 'card-bulb-border';
-    bulbBorder.setAttribute('aria-hidden', 'true');
-    card.appendChild(bulbBorder);
-
-    const cardTop = document.createElement('div');
-    cardTop.className = 'card-top';
-    const cardTopLeft = document.createElement('div');
-    cardTopLeft.className = 'card-top-left';
-    const genreBadge = document.createElement('span');
-    genreBadge.className = 'genre-badge';
-    genreBadge.textContent = station.genre || 'Radio';
-    cardTopLeft.appendChild(genreBadge);
-    if (isSxm) {
-      const sxmBadge = document.createElement('span');
-      sxmBadge.className = 'sxm-badge';
-      sxmBadge.textContent = 'SXM';
-      cardTopLeft.appendChild(sxmBadge);
-    }
-    cardTop.appendChild(cardTopLeft);
-    cardTop.innerHTML += `<div class="eq-bars" aria-hidden="true">
-      <span style="height:8px"></span><span style="height:14px"></span>
-      <span style="height:6px"></span><span style="height:11px"></span>
-      <span style="height:9px"></span></div>`;
-    card.appendChild(cardTop);
-
-    const cardName = document.createElement('div');
-    cardName.className = 'card-name';
-    cardName.textContent = station.name;
-    card.appendChild(cardName);
-
-    const cardSlogan = document.createElement('div');
-    cardSlogan.className = 'card-slogan';
-    cardSlogan.textContent = station.slogan || '';
-    card.appendChild(cardSlogan);
-
-    const cardFooter = document.createElement('div');
-    cardFooter.className = 'card-footer';
-    const playBtn = document.createElement('button');
-    playBtn.className = 'play-btn';
-    playBtn.title = station.id === currentStationId ? 'Stop' : 'Play';
-    playBtn.setAttribute('aria-label', station.id === currentStationId ? `Stop ${station.name}` : `Play ${station.name}`);
-    playBtn.innerHTML = station.id === currentStationId
-      ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-    cardFooter.appendChild(playBtn);
-    card.appendChild(cardFooter);
-
-    playBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      playStation(station.id);
-    });
-    card.addEventListener('click', () => playStation(station.id));
-
-    // Drag and drop
-    card.addEventListener('dragstart', e => {
-      dragSrcIndex = +card.dataset.index;
-      card.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    card.addEventListener('dragend', () => card.classList.remove('dragging'));
-    card.addEventListener('dragover', e => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      card.classList.add('drag-over');
-    });
-    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-    card.addEventListener('drop', async e => {
-      e.preventDefault();
-      card.classList.remove('drag-over');
-      const destIndex = +card.dataset.index;
-      if (dragSrcIndex !== null && dragSrcIndex !== destIndex) {
-        const moved = stations.splice(dragSrcIndex, 1)[0];
-        stations.splice(destIndex, 0, moved);
-        await api('POST', '/stations', stations);
-        renderGrid();
+let curTrack='';
+async function pollNow(first){
+  if(!currentId){ return; }
+  try{
+    const d = await api('GET','/nowplaying?id='+encodeURIComponent(currentId));
+    if(d && d.playing){
+      if(d.color) setAccent(d.color);
+      const sub = $('#stage');
+      if(d.song){
+        $('#eyebrowText').textContent = d.station || 'On Air';
+        $('#songTitle').textContent = d.song;
+        $('#artistName').textContent = d.artist || '';
+        const key=(d.artist||'')+'|'+d.song;
+        if(key!==curTrack){ curTrack=key; $('#videoBtn').style.display=''; $('#videoBtn').dataset.q=((d.artist||'')+' '+d.song).trim(); }
       }
-    });
-
-    grid.appendChild(card);
-  });
-
-  updatePagination(filtered.length);
+      if(d.art && d.art!==lastArt){
+        lastArt=d.art;
+        const img=$('#coverImg'); img.onload=()=>{ img.classList.add('show'); $('#coverPh').style.display='none'; };
+        img.src=d.art;
+        const bl=$('#bloom'); bl.style.backgroundImage=`url("${d.art}")`; bl.classList.add('on');
+      }
+    }
+  }catch(e){}
+  if(npTimer)clearTimeout(npTimer);
+  npTimer=setTimeout(()=>pollNow(false), 12000);
 }
 
-document.getElementById('prevPage').addEventListener('click', () => { currentPage--; renderGrid(); });
-document.getElementById('nextPage').addEventListener('click', () => { currentPage++; renderGrid(); });
+// volume
+let vDeb=null;
+function setVol(v){ v=Math.max(0,Math.min(100,v)); $('#vol').value=v; $('#vnum').textContent=v; document.documentElement.style.setProperty('--p',v+'%'); clearTimeout(vDeb); vDeb=setTimeout(()=>api('POST','/volume',{volume:v}),180); }
+$('#vol').addEventListener('input',e=>setVol(+e.target.value));
+$('#volDown').onclick=()=>setVol(+$('#vol').value-5); $('#volUp').onclick=()=>setVol(+$('#vol').value+5);
+$('#stopBtn').onclick=stop;
 
-// ── Add city modal ──
-document.getElementById('addCityBtn').addEventListener('click', () => {
-  document.getElementById('cityInput').value = '';
-  document.getElementById('cityModal').classList.add('open');
-  setTimeout(() => document.getElementById('cityInput').focus(), 50);
-});
-document.getElementById('cityCancelBtn').addEventListener('click', () => {
-  document.getElementById('cityModal').classList.remove('open');
-});
-document.getElementById('citySaveBtn').addEventListener('click', async () => {
-  const val = document.getElementById('cityInput').value.trim();
-  if (!val) return;
-  if (!cities.includes(val)) {
-    cities.push(val);
-    await api('POST', '/cities', cities);
-    renderCityTabs();
-    showToast(`Added city: ${val}`);
-  }
-  document.getElementById('cityModal').classList.remove('open');
-});
-document.getElementById('cityInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('citySaveBtn').click();
-  if (e.key === 'Escape') document.getElementById('cityCancelBtn').click();
+// video
+$('#videoBtn').onclick=function(){
+  const q=this.dataset.q; if(!q) return;
+  $('#vframe').innerHTML=`<iframe src="https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(q+' official video')}&autoplay=1&rel=0" allow="autoplay;encrypted-media;fullscreen" allowfullscreen></iframe>`;
+  $('#vmodal').classList.add('show');
+};
+$('#vmodalX').onclick=()=>{ $('#vmodal').classList.remove('show'); $('#vframe').innerHTML=''; };
+$('#vmodal').onclick=e=>{ if(e.target.id==='vmodal'){ $('#vmodal').classList.remove('show'); $('#vframe').innerHTML=''; } };
+
+// browse tabs
+document.querySelectorAll('.stab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.stab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  document.querySelectorAll('.spane').forEach(p=>p.classList.remove('active'));
+  $('#pane-'+b.dataset.pane).classList.add('active');
 });
 
-// ── Search tab switching ──
-document.querySelectorAll('.search-tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const pane = btn.dataset.pane;
-    document.querySelectorAll('.search-tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.search-pane').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('pane-' + pane).classList.add('active');
-    activeSearchPane = pane;
-
-    if (pane === 'siriusxm') {
-      refreshSxmPane();
-    }
-  });
+// add-to-stations from search results (event delegation) + play from results
+document.addEventListener('click', async e=>{
+  const add=e.target.closest('[data-add]'); if(add){ /* htmx add handles server side; refresh list */ setTimeout(loadStations,400); }
 });
 
-// ── Play SXM station directly by URL ──
-async function playSxmStation(station) {
-  if (currentStationId === station.id) {
-    await api('POST', '/stop');
-    currentStationId = null;
-    updateTicker(null);
-  } else {
-    const res = await api('POST', '/play', {
-      id: station.id,
-      url: station.url,
-      name: station.name,
-      genre: station.genre,
-      color: station.color,
-      source: station.source,
-      slogan: station.slogan,
-      city: station.city,
-    });
-    if (res.ok) {
-      currentStationId = station.id;
-      updateTicker(res.station);
-      showToast(`▶ ${station.name}`);
-    } else {
-      showToast('Could not play station', false);
-    }
-  }
+// city modal
+$('#cityCancel').onclick=()=>$('#cityModal').classList.remove('show');
+$('#citySave').onclick=async()=>{ const v=$('#cityInput').value.trim(); if(!v)return; cities.push(v); await api('POST','/cities',cities); $('#cityInput').value=''; $('#cityModal').classList.remove('show'); renderCities(); toast('Added '+v); };
+
+// SXM
+$('#sxmLoginBtn').onclick=async()=>{
+  const u=$('#sxmUsername').value.trim(), p=$('#sxmPassword').value;
+  if(!u||!p){ $('#sxmLoginError').textContent='Enter username and password'; return; }
+  $('#sxmLoginLabel').textContent='Signing in…'; $('#sxmLoginError').textContent='';
+  try{ const r=await api('POST','/sxm/login',{username:u,password:p});
+    if(r.ok){ $('#sxmLoginSection').style.display='none'; $('#sxmChannelSection').style.display=''; $('#sxmUsernameDisplay').textContent=u; htmx.ajax('GET','/api/sxm/channels','#sxmChannelResults'); }
+    else $('#sxmLoginError').textContent=r.error||'Login failed';
+  }catch(e){ $('#sxmLoginError').textContent='Login failed'; } finally{ $('#sxmLoginLabel').textContent='Sign In'; }
+};
+$('#sxmLogoutBtn').onclick=async()=>{ await fetch('/api/sxm/logout',{method:'POST'}); $('#sxmChannelSection').style.display='none'; $('#sxmLoginSection').style.display=''; };
+
+async function loadStations(){ try{ stations=await api('GET','/stations'); }catch(e){} renderRail(); }
+async function init(){
+  try{ [stations,cities]=await Promise.all([api('GET','/stations'),api('GET','/cities')]); }catch(e){}
+  renderCities(); renderRail();
+  // restore playing / resume / screenshot hook (?np=id)
+  const np=new URLSearchParams(location.search).get('np');
+  const status=await api('GET','/status').catch(()=>({}));
+  const startId = np || (status.playing && status.station && status.station.id);
+  if(startId){ const st=stations.find(s=>s.id===startId)|| (status.station); if(st){ currentId=st.id; showHero(st); renderRail(); pollNow(true); } }
+  else if(status.volume!=null) setVol(status.volume);
 }
-
-// ── Result card builder ──
-function buildResultCard(station, container) {
-  const card = document.createElement('div');
-  card.className = 'result-card' + (station.source === 'siriusxm' ? ' sxm-card' : '');
-  const alreadySaved = stations.some(s => s.id === station.id || s.url === station.url);
-  const isSxm = station.source === 'siriusxm';
-  const isPlaying = currentStationId === station.id;
-
-  const info = document.createElement('div');
-  info.className = 'result-info';
-  const nameEl = document.createElement('div');
-  nameEl.className = 'result-name';
-  nameEl.textContent = station.name;
-  if (isSxm) {
-    const badge = document.createElement('span');
-    badge.className = 'sxm-badge';
-    badge.textContent = 'SXM';
-    badge.style.marginLeft = '6px';
-    nameEl.appendChild(document.createTextNode(' '));
-    nameEl.appendChild(badge);
-  }
-  const metaEl = document.createElement('div');
-  metaEl.className = 'result-meta';
-  metaEl.textContent = [station.genre, station.city].filter(Boolean).join(' · ');
-  info.appendChild(nameEl);
-  info.appendChild(metaEl);
-  card.appendChild(info);
-
-  const actions = document.createElement('div');
-  actions.style.cssText = 'display:flex;gap:6px;align-items:center';
-
-  if (isSxm) {
-    const sxmPlayBtn = document.createElement('button');
-    sxmPlayBtn.className = 'play-btn sxm-play-btn';
-    sxmPlayBtn.title = isPlaying ? 'Stop' : 'Play';
-    sxmPlayBtn.setAttribute('aria-label', isPlaying ? `Stop ${station.name}` : `Play ${station.name}`);
-    sxmPlayBtn.style.cssText = 'width:36px;height:36px;border-radius:50%;border:none;background:var(--sxm-blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px var(--sxm-glow)';
-    sxmPlayBtn.innerHTML = isPlaying
-      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-      : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-    sxmPlayBtn.addEventListener('click', async function(e) {
-      e.stopPropagation();
-      await playSxmStation(station);
-      const svg = currentStationId === station.id
-        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-        : `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-      this.innerHTML = svg;
-      this.title = currentStationId === station.id ? 'Stop' : 'Play';
-    });
-    actions.appendChild(sxmPlayBtn);
-  }
-
-  const addBtn = document.createElement('button');
-  addBtn.className = 'add-btn';
-  addBtn.textContent = alreadySaved ? 'Saved' : '+ Add';
-  addBtn.disabled = alreadySaved;
-  addBtn.addEventListener('click', async function() {
-    stations.push(station);
-    await api('POST', '/stations', stations);
-    this.textContent = 'Saved';
-    this.disabled = true;
-    renderGrid();
-    showToast(`Added ${station.name}`);
-  });
-  actions.appendChild(addBtn);
-  card.appendChild(actions);
-  container.appendChild(card);
-}
-
-// ── htmx: refresh station grid when a station is added via htmx ──
-document.body.addEventListener('stationAdded', async () => {
-  stations = await api('GET', '/stations');
-  renderGrid();
-  showToast('Station added');
-});
-
-// ── SiriusXM pane ──
-async function refreshSxmPane() {
-  try {
-    const status = await fetch('/api/sxm/status').then(r => r.json());
-    sxmLoggedIn = status.logged_in;
-    sxmUsername = status.username || '';
-  } catch(e) {
-    sxmLoggedIn = false;
-  }
-
-  const loginSection = document.getElementById('sxmLoginSection');
-  const channelSection = document.getElementById('sxmChannelSection');
-
-  if (sxmLoggedIn) {
-    loginSection.style.display = 'none';
-    channelSection.style.display = 'block';
-    document.getElementById('sxmUsernameDisplay').textContent = sxmUsername;
-    if (!sxmChannelsLoaded) {
-      loadSxmChannels();
-    }
-  } else {
-    loginSection.style.display = 'block';
-    channelSection.style.display = 'none';
-    sxmChannelsLoaded = false;
-  }
-}
-
-async function loadSxmChannels() {
-  sxmChannelsLoaded = true;
-  const container = document.getElementById('sxmChannelResults');
-  container.innerHTML = '<div style="color:var(--faint);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:\'Libre Franklin\',sans-serif">Loading channels…</div>';
-  try {
-    const results = await fetch('/api/sxm/channels').then(r => r.json());
-    container.innerHTML = '';
-    if (results.error) {
-      container.innerHTML = `<div style="color:var(--stop-red);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:'Libre Franklin',sans-serif">Error: ${results.error}</div>`;
-      return;
-    }
-    if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<div style="color:var(--faint);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:\'Libre Franklin\',sans-serif">No channels available.</div>';
-      return;
-    }
-    results.forEach(s => buildResultCard(s, container));
-  } catch(e) {
-    sxmChannelsLoaded = false;
-    container.innerHTML = '<div style="color:var(--stop-red);font-size:13px;grid-column:1/-1;padding:10px 0;font-family:\'Libre Franklin\',sans-serif">Failed to load channels.</div>';
-  }
-}
-
-// SXM login
-document.getElementById('sxmLoginBtn').addEventListener('click', async () => {
-  const username = document.getElementById('sxmUsername').value.trim();
-  const password = document.getElementById('sxmPassword').value.trim();
-  const errEl = document.getElementById('sxmLoginError');
-  const btn = document.getElementById('sxmLoginBtn');
-
-  errEl.className = 'sxm-error';
-
-  if (!username || !password) {
-    errEl.textContent = 'Please enter your username and password.';
-    errEl.className = 'sxm-error show';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div><span>Signing in…</span>';
-
-  try {
-    const res = await fetch('/api/sxm/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    }).then(r => r.json());
-
-    if (res.ok) {
-      sxmChannelsLoaded = false;
-      await refreshSxmPane();
-      showToast('Signed in to SiriusXM');
-    } else {
-      errEl.textContent = res.error || 'Login failed. Check your credentials.';
-      errEl.className = 'sxm-error show';
-    }
-  } catch(e) {
-    errEl.textContent = 'Connection error. Please try again.';
-    errEl.className = 'sxm-error show';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<span id="sxmLoginLabel">Sign In</span>';
-  }
-});
-
-document.getElementById('sxmPassword').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('sxmLoginBtn').click();
-});
-
-// SXM logout
-document.getElementById('sxmLogoutBtn').addEventListener('click', async () => {
-  try {
-    await fetch('/api/sxm/logout', { method: 'POST' });
-    sxmLoggedIn = false;
-    sxmChannelsLoaded = false;
-    document.getElementById('sxmChannelResults').innerHTML = '';
-    await refreshSxmPane();
-    showToast('Signed out of SiriusXM');
-  } catch(e) {
-    showToast('Logout failed', false);
-  }
-});
-
-// ── Status polling ──
-async function pollStatus() {
-  try {
-    const s = await api('GET', '/status');
-    if (s.station) {
-      currentStationId = s.station.id;
-      updateTicker(s.station);
-    } else {
-      currentStationId = null;
-      if (s.last) { showResume(s.last); } else { updateTicker(null); }
-    }
-    if (s.volume !== undefined && s.volume !== volume) {
-      updateVolSlider(s.volume);
-    }
-  } catch(e) { /* ignore */ }
-}
-
-// ── Init ──
-async function init() {
-  try {
-    [stations, cities] = await Promise.all([
-      api('GET', '/stations'),
-      api('GET', '/cities'),
-    ]);
-  } catch(e) {
-    showToast('Could not load stations', false);
-  }
-  renderCityTabs();
-  renderGrid();
-  await pollStatus();
-  setInterval(pollStatus, 3000);
-}
-
 init();
 </script>
 </body>
